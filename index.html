@@ -1,0 +1,4875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Character Sheet">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#111111">
+<title>Character Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Josefin+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #141414;
+    --bg-card: #1e1e1e;
+    --bg-elevated: #2c2c2c;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
+    --border: #333333;
+    --accent-1: #EB4C4C;
+    --accent-2: #FF7070;
+    --accent-3: #FFA6A6;
+    --accent-4: #FFEDC7;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --nav-height: 84px;
+    --header-height: 60px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 112%; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #000;
+    color: var(--text-primary);
+    font-family: 'Josefin Sans', sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-primary);
+  }
+
+  /* On larger screens, constrain to phone shape */
+  @media (min-width: 500px) {
+    #app {
+      width: 480px;
+      height: 960px;
+      max-height: 100vh;
+      border-radius: 40px;
+      box-shadow: 0 0 0 1px #222, 0 32px 80px rgba(0,0,0,0.8);
+    }
+  }
+
+  /* ── ONBOARDING ── */
+  #onboarding-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-primary);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    gap: 32px;
+  }
+  .onboarding-slides {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .onboarding-slide {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    animation: fadeSlide 0.35s ease;
+  }
+  .onboarding-slide.active { display: flex; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .onboarding-icon { font-size: 67px; }
+  .onboarding-title {
+    font-family: 'Cinzel', serif;
+    font-size: 26px;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+    line-height: 1.3;
+  }
+  .onboarding-body {
+    font-size: 17px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    letter-spacing: 0.3px;
+    max-width: 280px;
+  }
+  .onboarding-dots { display: flex; gap: 8px; }
+  .onboarding-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.3s;
+  }
+  .onboarding-dot.active {
+    background: var(--accent-1);
+    width: 20px;
+    border-radius: 3px;
+  }
+  .onboarding-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent-1);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .onboarding-choice {
+    flex: 1;
+    padding: 14px 8px;
+    background: var(--accent-1);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .onboarding-choice-muted {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  /* ── WAKE UP PROMPT ── */
+  #wake-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-primary);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 32px;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .wake-icon {
+    font-size: 77px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.8; }
+  }
+
+  .wake-title {
+    font-family: 'Cinzel', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--accent-1);
+    letter-spacing: 2px;
+    text-align: center;
+  }
+
+  .wake-subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .wake-time-display {
+    font-family: 'Cinzel', serif;
+    font-size: 67px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 4px;
+    line-height: 1;
+  }
+
+  .wake-time-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .wake-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--accent-1);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .wake-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+  /* ── HEADER ── */
+  #header {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-logo {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--accent-1);
+    text-transform: uppercase;
+    text-shadow: 0 0 12px color-mix(in srgb, var(--accent-1) 80%, transparent),
+                 0 0 30px color-mix(in srgb, var(--accent-1) 50%, transparent),
+                 0 0 60px color-mix(in srgb, var(--accent-1) 25%, transparent);
+    filter: brightness(1.4);
+  }
+
+  .header-day {
+    font-size: 13px;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN CONTENT ── */
+  #main {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+  }
+
+  .page {
+    flex-direction: column;
+    padding: 20px;
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .page.active { display: flex; }
+
+  /* Allow scroll only on task list and other content pages */
+  .page.scrollable {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 20px;
+  }
+  .page.scrollable::-webkit-scrollbar { display: none; }
+
+  /* ── HOME PAGE ── */
+  #page-home {
+    gap: 10px;
+    padding: 12px;
+    overflow-y: auto;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #page-home .dashboard-grid { flex-shrink: 0; }
+  #page-home .home-progress-card { flex-shrink: 0; }
+  #page-home .home-stats-card { flex: 1; min-height: 0; }
+  #page-home #home-broccoli-panel { flex-shrink: 0; }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .home-progress-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+    padding: 24px;
+  }
+
+  .home-stats-card {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .home-stats-inner {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+    gap: 0;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .card-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .card-value {
+    font-family: 'Cinzel', serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .card-sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .card-full {
+    grid-column: 1 / -1;
+  }
+
+  /* Level card */
+  .level-bar-track {
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 3px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .level-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+    border-radius: 3px;
+    width: 34%;
+    transition: width 0.6s ease;
+  }
+
+  .level-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+
+  /* Stat scores */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-name {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .stat-bar-track {
+    height: 8px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  .stat-score {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  /* Progress ring */
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .ring-container {
+    position: relative;
+    width: 86px;
+    height: 86px;
+    flex-shrink: 0;
+  }
+
+  .ring-container svg {
+    transform: rotate(-90deg);
+  }
+
+  .ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .progress-info { flex: 1; }
+  .progress-title {
+    font-size: 19px;
+    color: var(--text-primary);
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .progress-detail {
+    font-size: 15px;
+    color: var(--text-secondary);
+  }
+
+
+
+  /* ── TASK LIST PAGE ── */
+  .list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+    padding: 20px 20px 0;
+    flex-shrink: 0;
+  }
+
+  .list-title {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 2px;
+  }
+
+  .list-progress {
+    font-size: 13px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    margin-left: auto;
+  }
+
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .task-list::-webkit-scrollbar { display: none; }
+
+  .task-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+  }
+
+  .task-item.completed {
+    opacity: 0.75;
+    border-color: #4CAF50;
+  }
+
+  .task-item.skipped {
+    opacity: 0.4;
+    border-color: transparent;
+  }
+
+  .task-check {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .task-check.done {
+    background: #4CAF50;
+    border-color: #4CAF50;
+  }
+
+  .task-check.done::after {
+    content: '✓';
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .task-info { flex: 1; }
+
+  .task-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+
+  .task-item.skipped .task-name {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+
+  .task-cat {
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .task-skip {
+    font-size: 12px;
+    color: var(--accent-1);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 6px 10px;
+    border: 1px solid var(--accent-1);
+    border-radius: 6px;
+    background: transparent;
+    font-family: 'Josefin Sans', sans-serif;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .task-skip:active { opacity: 0.7; }
+  .task-skip.undo { color: var(--accent-1); border-color: var(--accent-1); }
+
+  .task-flexi-tag {
+    font-size: 9px;
+    font-family: 'Josefin Sans', sans-serif;
+    letter-spacing: 1.5px;
+    padding: 2px 6px;
+    border-radius: 20px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .task-flexi-tag.green { color: #4CAF50; border: 1px solid #4CAF50; }
+  .task-flexi-tag.red   { color: #ff4444; border: 1px solid #ff4444; }
+
+  .complete-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--accent-1);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  .complete-btn.ready {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .complete-btn:active { transform: scale(0.98); }
+
+  /* ── STATS PAGE ── */
+  .stats-tab {
+    padding: 9px 4px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .stats-tab.active {
+    background: var(--accent-1);
+    border-color: var(--accent-1);
+  }
+
+  .graph-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    flex: 1;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .graph-title {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .graph-area {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    padding: 0 2px;
+  }
+
+  .graph-area-with-axis {
+    flex: 1;
+    display: flex;
+    gap: 0;
+    min-height: 0;
+  }
+
+  .y-axis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    width: 42px;
+    flex-shrink: 0;
+    align-items: flex-end;
+    padding-right: 8px;
+  }
+
+  .y-axis-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+
+  .graph-bars {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    min-height: 0;
+    padding: 0 2px;
+  }
+
+  .bar-group {
+    width: 32px;
+    min-width: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+
+  .bar-value {
+    font-size: 11px;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+    opacity: 0.8;
+  }
+
+  .bar-group {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .graph-bars .bar-group {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    flex-shrink: 1;
+    gap: 4px;
+  }
+
+  .bar {
+    width: 75%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+    min-height: 4px;
+  }
+
+  .bar-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── QUEST PAGE ── */
+  .quest-section-title {
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .quest-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .quest-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .quest-icon { font-size: 24px; }
+
+  .quest-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+    flex: 1;
+  }
+
+  .quest-progress-text {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: var(--accent-2);
+  }
+
+  .quest-bar-track {
+    height: 8px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .quest-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  .quest-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+  }
+
+  .trophy-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0.6;
+  }
+
+  .trophy-icon { font-size: 24px; }
+  .trophy-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+  }
+  .trophy-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    letter-spacing: 1px;
+  }
+
+  /* ── SETTINGS PAGE ── */
+  .settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .settings-row {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .settings-row:active { background: var(--bg-elevated); }
+
+  .settings-row-left { display: flex; flex-direction: column; gap: 2px; }
+  .settings-row-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+  .settings-row-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+  }
+  .settings-row-arrow {
+    color: var(--text-muted);
+    font-size: 17px;
+  }
+
+  /* ── BOTTOM NAV ── */
+  #bottom-nav {
+    height: var(--nav-height);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    flex-shrink: 0;
+    position: relative;
+    width: 100%;
+    z-index: 10;
+  }
+
+  #nav-glow {
+    position: absolute;
+    top: 6px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent-1);
+    opacity: 0.18;
+    filter: blur(14px);
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    transform: translateX(-50%);
+  }
+
+  #pages-container {
+    display: flex;
+    width: 500%;
+    height: 100%;
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+
+  #pages-container .page {
+    width: 20%;
+    flex-shrink: 0;
+    height: 100%;
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #pages-container .page.scrollable {
+    overflow-y: auto;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 10px 0;
+    transition: all 0.2s;
+    flex: 1;
+  }
+
+  .nav-item:active { background: var(--bg-elevated); }
+
+  .nav-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .nav-item-icon { font-size: 29px; filter: grayscale(1); opacity: 0.5; transition: all 0.2s; }
+  .nav-item-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .nav-item.active .nav-item-icon { filter: none; opacity: 1; color: var(--accent-1); }
+  .nav-item.active .nav-item-label { color: var(--accent-1); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .page.active { animation: fadeIn 0.3s ease; }
+
+  /* ── DAY COMPLETE OVERLAY ── */
+  #day-complete-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-primary);
+    z-index: 99;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
+    gap: 32px;
+    animation: fadeIn 0.6s ease;
+  }
+
+  #day-complete-overlay.visible { display: flex; }
+
+  .complete-icon {
+    font-size: 54px;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  .complete-day {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .complete-phrase {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    line-height: 1.4;
+    letter-spacing: 1px;
+  }
+
+  .dc-pill {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .dc-pill-val {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    color: var(--accent-1);
+  }
+  .dc-pill-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .dc-cat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dc-cat-name {
+    font-size: 13px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    width: 100px;
+    flex-shrink: 0;
+  }
+  .dc-cat-bar-track {
+    flex: 1;
+    min-width: 0;
+    height: 8px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .dc-cat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s ease;
+  }
+  .dc-cat-score {
+    font-size: 13px;
+    color: var(--text-muted);
+    width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .complete-dismiss {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid var(--accent-1);
+    border-radius: var(--radius);
+    color: var(--accent-1);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .complete-dismiss:active {
+    background: var(--accent-1);
+    color: white;
+  }
+
+  .stat-score-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: space-between;
+  }
+  .stat-score-card-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .stat-score-card-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .stat-score-card-val {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .stat-row-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stat-row-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    width: 68px;
+    flex-shrink: 0;
+  }
+  .stat-row-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .stat-row-score {
+    font-size: 12px;
+    color: var(--text-muted);
+    width: 26px;
+    text-align: right;
+    flex-shrink: 0;
+    font-family: 'Cinzel', serif;
+  }
+
+  .stat-score-card-bar {
+    height: 3px;
+    background: var(--bg-elevated);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 2px;
+  }
+  .stat-score-card-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .theme-swatch {
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+    height: 36px;
+    display: flex;
+    flex-direction: column;
+  }
+  .theme-swatch div { flex: 1; }
+  .theme-swatch.selected { border-color: var(--text-primary); }
+  .theme-swatch:active { opacity: 0.8; }
+
+  .trophy-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 8px;
+  }
+  .trophy-icon { font-size: 29px; }
+  .trophy-name {
+    font-size: 16px;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+    font-family: 'Cinzel', serif;
+  }
+  .trophy-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-top: 3px;
+  }
+
+  .broccoli-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .broccoli-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .broccoli-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    font-family: 'Josefin Sans', sans-serif;
+  }
+  .broccoli-btn:active { transform: scale(0.9); background: var(--accent-1); }
+  .broccoli-count {
+    font-family: 'Cinzel', serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 36px;
+    text-align: center;
+    line-height: 1;
+  }
+
+  .task-modal-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent-1);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .task-modal-btn-danger {
+    background: #ff4444;
+    color: white !important;
+  }
+  .cat-option {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .cat-option.selected {
+    border-color: var(--accent-1);
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+  }
+  .list-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  .list-picker-row input[type=checkbox] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-1);
+    cursor: pointer;
+  }
+  .remove-task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .remove-task-item.selected {
+    border-color: #ff4444;
+    background: rgba(255,68,68,0.08);
+  }
+  .remove-task-item input[type=checkbox] {
+    width: 18px;
+    height: 18px;
+    accent-color: #ff4444;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .remove-task-name {
+    flex: 1;
+    font-size: 16px;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+  .remove-task-cat {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .remove-all-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  .remove-all-row input { accent-color: #ff4444; width:16px;height:16px; }
+  .reorder-tab {
+    flex: 1;
+    padding: 12px 8px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .reorder-tab.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--accent-1);
+  }
+  .reorder-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: grab;
+    user-select: none;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .reorder-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+  }
+  .reorder-item.drag-over {
+    border-color: var(--accent-1);
+    transform: scale(1.01);
+  }
+  .reorder-handle {
+    color: var(--text-muted);
+    font-size: 19px;
+    flex-shrink: 0;
+  }
+  .reorder-item-name {
+    flex: 1;
+    font-size: 16px;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+  .reorder-item-cat {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── CONFIRM MODAL ── */
+  #confirm-modal {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+  #confirm-modal.visible { display: flex; }
+  .modal-box {
+    background: var(--bg-card);
+    border: 1px solid #ff4444;
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+  .modal-title {
+    font-family: 'Cinzel', serif;
+    font-size: 19px;
+    font-weight: 600;
+    color: #ff4444;
+    letter-spacing: 1px;
+  }
+  .modal-body {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    letter-spacing: 0.5px;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .modal-cancel {
+    flex: 1; padding: 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .modal-confirm {
+    flex: 1; padding: 14px;
+    background: #ff4444;
+    border: 1px solid #ff4444;
+    border-radius: var(--radius-sm);
+    color: white;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .modal-cancel:active { background: var(--bg-elevated); }
+  .modal-confirm:active { opacity: 0.8; }
+
+  .theme-monday { --accent-1: #EB4C4C; --accent-2: #FF7070; --accent-3: #FFA6A6; --accent-4: #FFEDC7; }
+  .theme-tuesday { --accent-1: #F26076; --accent-2: #FF9760; --accent-3: #FFD150; --accent-4: #458B73; }
+  .theme-wednesday { --accent-1: #6CA651; --accent-2: #BBCB2E; --accent-3: #839705; --accent-4: #6B7445; }
+  .theme-thursday { --accent-1: #5A9CB5; --accent-2: #FACE68; --accent-3: #FAAC68; --accent-4: #FA6868; }
+  .theme-friday { --accent-1: #9667e0; --accent-2: #d4bbfc; --accent-3: #ebd9fc; --accent-4: #f2ebfb; }
+  .theme-saturday { --accent-1: #4A5568; --accent-2: #718096; --accent-3: #A0AEC0; --accent-4: #E2E8F0; }
+  .theme-sunday { --accent-1: #CFFFE2; --accent-2: #A2D5C6; --accent-3: #F6F6F6; --accent-4: #000000; }
+</style>
+</head>
+<body>
+
+<div id="app" class="theme-monday">
+
+  <!-- CONFIRM MODAL -->
+  <div id="confirm-modal">
+    <div class="modal-box">
+      <div class="modal-title" id="confirm-modal-title">⚠ Are you sure?</div>
+      <div class="modal-body" id="confirm-modal-body"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeConfirmModal()">Cancel</button>
+        <button class="modal-confirm" id="confirm-modal-btn" onclick="">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAKE UP OVERLAY -->
+  <!-- ONBOARDING -->
+  <div id="onboarding-overlay">
+    <div class="onboarding-slides" id="onboarding-slides">
+
+      <!-- Slide 1: Welcome -->
+      <div class="onboarding-slide active">
+        <div class="onboarding-icon">⚔️</div>
+        <div class="onboarding-title">Character Sheet</div>
+        <div class="onboarding-body">Build your daily routine. Track your progress. Level up.</div>
+      </div>
+
+      <!-- Slide 2: Setup choices -->
+      <div class="onboarding-slide">
+        <div class="onboarding-icon">🗒️</div>
+        <div class="onboarding-title">Set Up Your Lists</div>
+        <div class="onboarding-body">Start with a curated set of daily tasks, or build from scratch. You can always change this later.</div>
+        <div style="display:flex;gap:10px;width:100%;margin-top:12px;">
+          <button class="onboarding-choice onboarding-choice-muted" onclick="onboardingSetTasks('fresh')">Start Fresh</button>
+          <button class="onboarding-choice" onclick="onboardingSetTasks('fresh')">Starter Pack</button>
+        </div>
+        <div style="margin-top:20px;width:100%;border-top:1px solid var(--border);padding-top:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-elevated);border-radius:var(--radius-sm);padding:14px;">
+            <div>
+              <div style="font-size:14px;color:var(--text-primary);letter-spacing:0.5px;" id="onboard-tracker-label">🥦 Broccoli Tracker</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;letter-spacing:0.5px;">Log your daily intake</div>
+            </div>
+            <div id="onboard-tracker-toggle" onclick="onboardToggleTracker()" style="width:44px;height:26px;border-radius:13px;background:var(--bg-card);border:1px solid var(--border);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;">
+              <div id="onboard-tracker-knob" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--text-muted);transition:transform 0.2s;"></div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.5px;margin-top:8px;text-align:center;">💡 Tip: you can customise this tracker anytime in Settings</div>
+          <div style="font-size:10px;color:var(--text-muted);letter-spacing:0.5px;margin-top:4px;text-align:center;">Your data is stored locally on your device</div>
+        </div>
+      </div>
+
+      <!-- Slide 3: Add to home screen -->
+      <div class="onboarding-slide">
+        <div class="onboarding-icon">📲</div>
+        <div class="onboarding-title">Add to Home Screen</div>
+        <div class="onboarding-body" id="install-body">For the best experience, save this to your home screen and open it like an app.</div>
+        <div id="install-steps" style="display:flex;flex-direction:column;gap:10px;width:100%;margin-top:12px;"></div>
+      </div>
+
+    </div>
+
+    <!-- Dots -->
+    <div class="onboarding-dots" id="onboarding-dots">
+      <div class="onboarding-dot active" id="dot-0"></div>
+      <div class="onboarding-dot" id="dot-1"></div>
+      <div class="onboarding-dot" id="dot-2"></div>
+    </div>
+
+    <button class="onboarding-btn" id="onboarding-btn" onclick="onboardingNext()">Next →</button>
+  </div>
+
+  <div id="wake-overlay">
+    <div class="wake-icon">🌅</div>
+    <div>
+      <div class="wake-title">Good Morning</div>
+      <div class="wake-subtitle" style="margin-top:6px">When did you wake up today?</div>
+    </div>
+    <div onclick="document.getElementById('wake-time-input').click()" style="cursor:pointer;">
+      <div class="wake-time-display" id="wake-time-display">7:00 AM</div>
+      <div class="wake-time-label" style="margin-top:8px">Tap to adjust</div>
+    </div>
+    <input type="time" id="wake-time-input" value="07:00"
+      style="opacity:0;position:absolute;pointer-events:none;" />
+    <button class="wake-btn" onclick="logWakeTime()">BEGIN THE DAY</button>
+  </div>
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="header-logo">Character Sheet</div>
+    <div class="header-day" id="header-day">Monday</div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="pages-container">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+
+      <!-- Row 1: Streaks + Level -->
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-label">Streak</div>
+          <div style="display:flex;align-items:center;gap:0;margin-top:2px;">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+              <div class="card-value" id="current-streak">0</div>
+              <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-top:2px;">CURRENT</div>
+            </div>
+            <div style="width:1px;height:40px;background:var(--border);flex-shrink:0;"></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+              <div class="card-value" id="best-streak" style="color:var(--accent-2);">0</div>
+              <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-top:2px;">BEST</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" onclick="openRanksModal()" style="cursor:pointer;">
+          <div class="card-label">Level</div>
+          <div class="card-value" style="font-size:16px;line-height:1.2;" id="level-name">Dormant I</div>
+          <div class="level-bar-track" style="margin-top:8px;">
+            <div class="level-bar-fill" id="level-bar" style="width:0%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:5px;">
+            <span style="font-size:10px;color:var(--accent-2)" id="xp-display">0 xp</span>
+            <span style="font-size:10px;color:var(--text-muted)" id="level-next-xp">100 to next</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Progress ring -->
+      <div class="card card-full home-progress-card">
+        <div class="ring-container" style="width:86px;height:86px;flex-shrink:0;">
+          <svg width="86" height="86" viewBox="0 0 88 88">
+            <circle cx="44" cy="44" r="36" fill="none" stroke="#2a2a2a" stroke-width="7"/>
+            <circle cx="44" cy="44" r="36" fill="none" stroke="var(--accent-1)" stroke-width="7"
+              stroke-dasharray="226" stroke-dashoffset="226" id="progress-ring" stroke-linecap="round"
+              style="transition:stroke-dashoffset 0.6s ease;transform:rotate(-90deg);transform-origin:center"/>
+          </svg>
+          <div class="ring-text" id="progress-pct" style="font-size:20px;">0%</div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:10px;color:var(--text-secondary);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Today's Progress</div>
+          <div class="progress-title" id="progress-list-label" style="font-size:19px;font-weight:600;color:var(--text-primary);letter-spacing:0.5px;">🌅 Morning List</div>
+          <div class="progress-detail" id="progress-detail" style="margin-top:4px;font-size:15px;color:var(--text-secondary);">0 of 0 tasks complete</div>
+        </div>
+      </div>
+
+      <!-- Row 3: Broccoli -->
+      <div id="home-broccoli-panel" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;" class="card card-full">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="home-tracker-emoji" style="font-size:20px;">🥦</span>
+          <div>
+            <div class="card-label" id="home-tracker-name" style="margin-bottom:0;">Broccoli</div>
+            <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;">today's count</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="broccoli-btn" onclick="adjustBroccoli(-1)">−</button>
+          <div class="broccoli-count" id="broccoli-count">0</div>
+          <button class="broccoli-btn" onclick="adjustBroccoli(1)">+</button>
+        </div>
+      </div>
+
+      <!-- Row 4: Stat bars -->
+      <div class="card card-full home-stats-card" onclick="toggleStatsMode()" style="cursor:pointer;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="card-label" style="margin-bottom:0;">Today's Stats</div>
+          <div id="stats-mode-indicator" style="font-size:10px;color:var(--text-muted);letter-spacing:1px;">% PCT</div>
+        </div>
+        <div class="home-stats-inner">
+          <div class="stat-row-item">
+            <div class="stat-row-name">Physical</div>
+            <div class="stat-row-bar"><div class="stat-bar-fill" style="width:0%;height:100%;border-radius:3px;"></div></div>
+            <div class="stat-row-score" id="stat-physical">0/0</div>
+          </div>
+          <div class="stat-row-item">
+            <div class="stat-row-name">Mental</div>
+            <div class="stat-row-bar"><div class="stat-bar-fill" style="width:0%;height:100%;border-radius:3px;"></div></div>
+            <div class="stat-row-score" id="stat-mental">0/0</div>
+          </div>
+          <div class="stat-row-item">
+            <div class="stat-row-name">Emotional</div>
+            <div class="stat-row-bar"><div class="stat-bar-fill" style="width:0%;height:100%;border-radius:3px;"></div></div>
+            <div class="stat-row-score" id="stat-emotional">0/0</div>
+          </div>
+          <div class="stat-row-item">
+            <div class="stat-row-name">Social</div>
+            <div class="stat-row-bar"><div class="stat-bar-fill" style="width:0%;height:100%;border-radius:3px;"></div></div>
+            <div class="stat-row-score" id="stat-social">0/0</div>
+          </div>
+          <div class="stat-row-item">
+            <div class="stat-row-name">Nutritional</div>
+            <div class="stat-row-bar"><div class="stat-bar-fill" style="width:0%;height:100%;border-radius:3px;"></div></div>
+            <div class="stat-row-score" id="stat-nutritional">0/0</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TASKS -->
+    <div class="page" id="page-tasks" style="flex-direction:column;overflow:hidden;display:none;">
+      <!-- Day complete state -->
+      <div id="day-complete-state" style="display:none;flex-direction:column;align-items:center;flex:1;gap:0;overflow:hidden;">
+
+        <!-- Confetti canvas -->
+        <canvas id="confetti-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;"></canvas>
+
+        <!-- Top hero -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 24px 14px;text-align:center;">
+          <div class="complete-icon">⚔️</div>
+          <div class="complete-day" id="complete-date"></div>
+          <div class="complete-phrase" id="complete-phrase"></div>
+        </div>
+
+        <!-- XP + Streak pills -->
+        <div style="display:flex;gap:10px;padding:0 24px 14px;width:100%;box-sizing:border-box;">
+          <div class="dc-pill">
+            <div class="dc-pill-val" id="dc-xp">0</div>
+            <div class="dc-pill-label">XP Today</div>
+          </div>
+          <div class="dc-pill">
+            <div class="dc-pill-val" id="dc-streak">0🔥</div>
+            <div class="dc-pill-label">Day Streak</div>
+          </div>
+          <div class="dc-pill">
+            <div class="dc-pill-val" id="dc-broc">0🥦</div>
+            <div class="dc-pill-label">Broccoli</div>
+          </div>
+        </div>
+
+        <!-- Category scores -->
+        <div style="padding:16px 24px 16px;width:100%;box-sizing:border-box;">
+          <div class="quest-section-title" style="margin-bottom:12px;font-weight:700;font-size:14px;text-decoration:underline;text-underline-offset:4px;color:var(--text-primary);text-align:center;">Today's Scores</div>
+          <div id="dc-cat-scores" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+
+        <!-- Streak milestone callout -->
+        <div id="dc-milestone" style="display:none;margin:0 24px 14px;padding:12px;background:var(--bg-card);border:1px solid var(--accent-2);border-radius:var(--radius);text-align:center;width:calc(100% - 48px);box-sizing:border-box;">
+          <div style="font-size:22px;margin-bottom:6px;" id="dc-milestone-icon">🏆</div>
+          <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--accent-2);letter-spacing:1px;" id="dc-milestone-text">Milestone reached!</div>
+        </div>
+
+        <div style="padding:0 24px 20px;width:100%;box-sizing:border-box;margin-top:auto;">
+          <button class="complete-dismiss" onclick="navigateTo('home')">Return Home</button>
+        </div>
+
+      </div>
+      <!-- Normal list state -->
+      <div id="list-state" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+
+        <!-- Broccoli tally -->
+        <div class="list-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="list-title" id="list-title">🌅 Morning</div>
+            <div class="list-progress" id="list-progress">0/0</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-right:12px;">
+            <button id="edit-undo-btn" onclick="undoEditMode()" style="display:none;background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text-muted);font-family:'Josefin Sans',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">UNDO</button>
+            <button id="edit-tasks-btn" onclick="toggleEditMode()" style="background:transparent;border:2px solid #f0c040;border-radius:6px;padding:8px 14px;color:#f0c040;font-family:'Josefin Sans',sans-serif;font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">MANAGE</button>
+          </div>
+        </div>
+        <div class="task-list" id="task-list" style="flex:1;overflow-y:auto;min-height:0;"></div>
+        <div id="complete-btn-wrap" style="padding:8px 20px;flex-shrink:0;">
+          <button class="complete-btn" id="complete-btn" onclick="completeList()">
+            Complete Morning ✓
+          </button>
+        </div>
+        <!-- Sticky add task bar (shown in manage mode) -->
+        <div id="add-task-bar" style="display:none;padding:10px 20px;border-top:1px solid var(--border);background:var(--bg-secondary);flex-shrink:0;">
+          <button onclick="openAddTask()" style="width:100%;padding:14px;background:none;border:1px solid var(--accent-1);border-radius:var(--radius-sm);color:var(--accent-1);font-family:'Josefin Sans',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;">+ ADD TASK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="page" id="page-stats" style="overflow:hidden;flex-direction:column;gap:10px;padding:16px;">
+
+      <!-- View tabs + period dropdown in one row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;flex-shrink:0;margin-top:4px;">
+        <button class="stats-tab active" id="stats-tab-cats" onclick="switchStatsTab('cats')">Categories</button>
+        <button class="stats-tab" id="stats-tab-wake" onclick="switchStatsTab('wake')">Wake Time</button>
+        <button class="stats-tab" id="stats-tab-broc" onclick="switchStatsTab('broc')">🥦</button>
+        <select id="stats-period-select" onchange="onStatsPeriodChange(this.value)" class="stats-tab" style="appearance:none;-webkit-appearance:none;text-align:center;cursor:pointer;outline:none;padding:9px 4px;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%228%22 height=%225%22 viewBox=%220 0 8 5%22><path d=%22M0 0l4 5 4-5z%22 fill=%22%23888%22/></svg>');background-repeat:no-repeat;background-position:right 8px center;">
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="week">Last Week</option>
+          <option value="month">Last 30 Days</option>
+          <option value="alltime">All Time</option>
+        </select>
+      </div>
+
+      <!-- Graph + cards area -->
+      <div id="stats-content" style="display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;">
+        <div class="graph-card" style="flex:1;min-height:0;">
+          <div class="graph-title" id="stats-graph-title">Today — Categories</div>
+          <div style="position:relative;flex:1;display:flex;flex-direction:column;min-height:0;">
+            <div class="graph-area" id="stats-graph-area" style="position:relative;flex:1;"></div>
+            <svg id="stats-line-overlay" style="position:absolute;top:0;left:0;width:100%;height:calc(100% - 20px);pointer-events:none;overflow:visible;"></svg>
+          </div>
+        </div>
+        <div id="stats-cards" style="display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:8px;flex-shrink:0;"></div>
+      </div>
+
+    </div>
+
+    <!-- QUESTS -->
+    <div class="page scrollable" id="page-quests">
+      <div class="quest-section-title">Active Quests</div>
+
+      <div class="quest-card" id="streak-quest-card">
+        <div class="quest-header">
+          <div class="quest-icon">🔥</div>
+          <div class="quest-name" id="streak-q-name">Streak — 3 Days</div>
+          <div class="quest-progress-text" id="streak-q-progress">0/3</div>
+        </div>
+        <div class="quest-bar-track">
+          <div class="quest-bar-fill" id="streak-q-bar" style="width:0%"></div>
+        </div>
+        <div class="quest-sub" id="streak-q-sub">Complete your full routine 3 days in a row</div>
+      </div>
+
+      <div class="quest-card" id="morning-quest-card">
+        <div class="quest-header">
+          <div class="quest-icon">🌅</div>
+          <div class="quest-name" id="morning-q-name">Morning Person — 3 Days</div>
+          <div class="quest-progress-text" id="morning-q-progress">0/3</div>
+        </div>
+        <div class="quest-bar-track">
+          <div class="quest-bar-fill" id="morning-q-bar" style="width:0%"></div>
+        </div>
+        <div class="quest-sub" id="morning-q-sub">Complete morning list before 7:00am, 3 days running</div>
+      </div>
+
+      <div class="quest-card" id="xp-quest-card">
+        <div class="quest-header">
+          <div class="quest-icon">💰</div>
+          <div class="quest-name" id="xp-q-name">First Steps — 50 XP</div>
+          <div class="quest-progress-text" id="xp-q-progress">0/50</div>
+        </div>
+        <div class="quest-bar-track">
+          <div class="quest-bar-fill" id="xp-q-bar" style="width:0%"></div>
+        </div>
+        <div class="quest-sub" id="xp-q-sub">Accumulate your first 50 XP</div>
+      </div>
+
+      <div class="quest-section-title" style="margin-top:8px">Completed</div>
+      <div id="trophy-list"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page scrollable" id="page-settings">
+      <div class="settings-section">
+        <div class="quest-section-title">Preferences</div>
+        <div class="settings-row" onclick="openWakeGoalPicker()">
+          <div class="settings-row-left">
+            <div class="settings-row-label">Wake Up Goal</div>
+            <div class="settings-row-sub" id="wake-goal-display">Target: 7:00 AM</div>
+          </div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+        <div class="settings-row" onclick="openQuestSettings()">
+          <div class="settings-row-left">
+            <div class="settings-row-label">Quests</div>
+            <div class="settings-row-sub">Configure quest settings</div>
+          </div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+        <div class="settings-row" onclick="toggleBroccoli()">
+          <div class="settings-row-left">
+            <div class="settings-row-label" id="tracker-settings-label">Daily Tracker</div>
+            <div class="settings-row-sub" id="broccoli-toggle-sub">Track your substance of choice</div>
+          </div>
+          <div id="broccoli-setting-toggle" style="width:44px;height:26px;border-radius:13px;background:var(--bg-elevated);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;">
+            <div id="broccoli-setting-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;transition:transform 0.2s;transform:translateX(0);"></div>
+          </div>
+        </div>
+        <div class="settings-row" onclick="openTrackerCustomise()" id="tracker-customise-row">
+          <div class="settings-row-left">
+            <div class="settings-row-label">Customise Tracker</div>
+            <div class="settings-row-sub" id="tracker-customise-sub">🥦 Broccoli</div>
+          </div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+        <div class="settings-row" onclick="setResetTime()">
+          <div class="settings-row-left">
+            <div class="settings-row-label">Daily Reset Time</div>
+            <div class="settings-row-sub" id="reset-time-display">Currently 2:00am</div>
+          </div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="quest-section-title">Data</div>
+        <div class="settings-row" onclick="exportData()">
+          <div class="settings-row-left">
+            <div class="settings-row-label">Export Data</div>
+            <div class="settings-row-sub">Download as JSON</div>
+          </div>
+          <div class="settings-row-arrow">↓</div>
+        </div>
+        <div class="settings-row" onclick="importData()">
+          <div class="settings-row-left">
+            <div class="settings-row-label">Import Data</div>
+            <div class="settings-row-sub">Restore from JSON</div>
+          </div>
+          <div class="settings-row-arrow">↑</div>
+        </div>
+        <div class="settings-row" onclick="showDataPrivacyInfo()">
+          <div class="settings-row-left">
+            <div class="settings-row-label">Your Data &amp; Privacy</div>
+            <div class="settings-row-sub">Where your data lives</div>
+          </div>
+          <div class="settings-row-arrow" style="font-size:18px;opacity:0.7;">ℹ</div>
+        </div>
+        <div style="padding:12px 4px 4px;font-size:10px;color:var(--text-muted);letter-spacing:0.8px;line-height:1.6;">
+          Updating the app? Export your data first — it won't carry over to a new version automatically.
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="quest-section-title">Theme</div>
+        <div class="card" style="gap:12px;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="settings-row-label">Daily Rotation</div>
+            <div id="rotation-toggle" onclick="toggleRotation()" style="width:44px;height:26px;border-radius:13px;background:#4CAF50;cursor:pointer;position:relative;transition:background 0.2s;">
+              <div id="rotation-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;transition:transform 0.2s;"></div>
+            </div>
+          </div>
+          <div class="settings-row-sub" id="rotation-label">Each day uses its own colour palette</div>
+          <div id="theme-swatches" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:4px;">
+            <div class="theme-swatch" onclick="selectTheme('monday')" data-day="monday" title="Monday">
+              <div style="background:#EB4C4C"></div><div style="background:#FF7070"></div>
+            </div>
+            <div class="theme-swatch" onclick="selectTheme('tuesday')" data-day="tuesday" title="Tuesday">
+              <div style="background:#F26076"></div><div style="background:#FFD150"></div>
+            </div>
+            <div class="theme-swatch" onclick="selectTheme('wednesday')" data-day="wednesday" title="Wednesday">
+              <div style="background:#6CA651"></div><div style="background:#BBCB2E"></div>
+            </div>
+            <div class="theme-swatch" onclick="selectTheme('thursday')" data-day="thursday" title="Thursday">
+              <div style="background:#5A9CB5"></div><div style="background:#FACE68"></div>
+            </div>
+            <div class="theme-swatch" onclick="selectTheme('friday')" data-day="friday" title="Friday">
+              <div style="background:#9667e0"></div><div style="background:#d4bbfc"></div>
+            </div>
+            <div class="theme-swatch" onclick="selectTheme('saturday')" data-day="saturday" title="Saturday">
+              <div style="background:#4A5568"></div><div style="background:#A0AEC0"></div>
+            </div>
+            <div class="theme-swatch" onclick="selectTheme('sunday')" data-day="sunday" title="Sunday">
+              <div style="background:#CFFFE2"></div><div style="background:#000000"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="quest-section-title">Danger Zone</div>
+        <div class="settings-row" onclick="openDebugPage()" style="border-color:#888;">
+          <div class="settings-row-left">
+            <div class="settings-row-label" style="color:var(--text-secondary);">🛠 Debug Tools</div>
+            <div class="settings-row-sub">Developer options</div>
+          </div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+        <div class="settings-row" onclick="masterReset()" style="border-color:#ff4444;">
+          <div class="settings-row-left">
+            <div class="settings-row-label" style="color:#ff4444;">Master Reset</div>
+            <div class="settings-row-sub">Wipe all data and start fresh</div>
+          </div>
+          <div class="settings-row-arrow" style="color:#ff4444;">⚠</div>
+        </div>
+      </div>
+    </div><!-- end page-settings -->
+
+
+    </div><!-- end pages-container -->
+  </div><!-- end main -->
+
+  <!-- BOTTOM NAV -->
+  <div id="bottom-nav">
+    <div id="nav-glow"></div>
+    <div class="nav-item active" onclick="navigateTo('home')" id="nav-home">
+      <div class="nav-item-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></div>
+      <div class="nav-item-label">Home</div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" onclick="navigateTo('tasks')" id="nav-tasks">
+      <div class="nav-item-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><rect x="3" y="5" width="18" height="17" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></div>
+      <div class="nav-item-label">Tasks</div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" onclick="navigateTo('stats')" id="nav-stats">
+      <div class="nav-item-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/></svg></div>
+      <div class="nav-item-label">Stats</div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" onclick="navigateTo('quests')" id="nav-quests">
+      <div class="nav-item-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5L12 2z"/><path d="M12 7v5M9.5 9.5l2.5 2.5 2.5-2.5"/></svg></div>
+      <div class="nav-item-label">Quests</div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" onclick="navigateTo('settings')" id="nav-settings">
+      <div class="nav-item-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+      <div class="nav-item-label">Settings</div>
+    </div>
+  </div>
+
+
+  <!-- ADD TASK MODAL -->
+  <div id="add-task-modal" style="display:none;position:absolute;inset:0;background:var(--bg-primary);z-index:300;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-primary);">Add Task</div>
+      <button onclick="closeAddTask()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;">TASK NAME</div>
+      <input id="add-task-name" type="text" placeholder="e.g. Meditation"
+        style="width:100%;box-sizing:border-box;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:14px 16px;color:var(--text-primary);font-size:16px;font-family:'Josefin Sans',sans-serif;letter-spacing:1px;outline:none;"/>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;">CATEGORY</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="add-cat-picker"></div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;">ADD TO LIST</div>
+      <div style="display:flex;gap:8px;">
+        <div id="add-list-morning" onclick="toggleAddList('morning')" style="flex:1;padding:12px 8px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-family:'Josefin Sans',sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-muted);cursor:pointer;">🌅 MORNING</div>
+        <div id="add-list-day" onclick="toggleAddList('day')" style="flex:1;padding:12px 8px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-family:'Josefin Sans',sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-muted);cursor:pointer;">☀️ DAY</div>
+        <div id="add-list-night" onclick="toggleAddList('night')" style="flex:1;padding:12px 8px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-family:'Josefin Sans',sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-muted);cursor:pointer;">🌙 NIGHT</div>
+      </div>
+
+      <!-- Flexi toggle -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-elevated);border-radius:var(--radius-sm);border:1px solid var(--border);">
+        <div>
+          <div style="font-size:13px;color:var(--text-primary);letter-spacing:1px;">Flexi Task</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Skipping won't affect your score</div>
+        </div>
+        <div id="add-flexi-toggle" onclick="toggleAddFlexi()" style="width:44px;height:24px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s;">
+          <div id="add-flexi-knob" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--text-muted);transition:transform 0.2s;"></div>
+        </div>
+      </div>
+      <!-- Consecutive skips sub-toggle (shown when flexi is on) -->
+      <div id="add-consec-row" style="display:none;margin-top:-8px;padding:14px 16px;background:var(--bg-elevated);border-radius:var(--radius-sm);border:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:13px;color:var(--text-primary);letter-spacing:1px;">Allow Consecutive Skips</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">If off, skipping two days in a row deducts points</div>
+          </div>
+          <div id="add-consec-toggle" onclick="toggleAddConsec()" style="width:44px;height:24px;border-radius:12px;background:var(--accent-1);border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s;">
+            <div id="add-consec-knob" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;transition:transform 0.2s;transform:translateX(20px);"></div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="addTaskConfirm()" style="margin-top:8px;padding:16px;background:var(--accent-1);border:none;border-radius:var(--radius-sm);font-family:'Josefin Sans',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;width:100%;">ADD TASK ✓</button>
+    </div>
+  </div>
+
+  <!-- EDIT TASK MODAL -->
+  <div id="edit-task-modal" style="display:none;position:absolute;inset:0;background:var(--bg-primary);z-index:300;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-primary);">Edit Task</div>
+      <button onclick="closeEditTask()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;">TASK NAME</div>
+      <input id="edit-task-name" type="text"
+        style="width:100%;box-sizing:border-box;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:14px 16px;color:var(--text-primary);font-size:16px;font-family:'Josefin Sans',sans-serif;letter-spacing:1px;outline:none;"/>
+      <!-- Flexi toggle -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-elevated);border-radius:var(--radius-sm);border:1px solid var(--border);">
+        <div>
+          <div style="font-size:13px;color:var(--text-primary);letter-spacing:1px;">Flexi Task</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Skipping won't affect your score</div>
+        </div>
+        <div id="edit-flexi-toggle" onclick="toggleEditFlexi()" style="width:44px;height:24px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s;">
+          <div id="edit-flexi-knob" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--text-muted);transition:transform 0.2s;"></div>
+        </div>
+      </div>
+      <div id="edit-consec-row" style="display:none;margin-top:-8px;padding:14px 16px;background:var(--bg-elevated);border-radius:var(--radius-sm);border:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:13px;color:var(--text-primary);letter-spacing:1px;">Allow Consecutive Skips</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">If off, skipping two days in a row deducts points</div>
+          </div>
+          <div id="edit-consec-toggle" onclick="toggleEditConsec()" style="width:44px;height:24px;border-radius:12px;background:var(--accent-1);border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s;">
+            <div id="edit-consec-knob" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;transition:transform 0.2s;transform:translateX(20px);"></div>
+          </div>
+        </div>
+      </div>
+      <button onclick="editTaskConfirm()" style="margin-top:8px;padding:16px;background:var(--accent-1);border:none;border-radius:var(--radius-sm);font-family:'Josefin Sans',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;width:100%;">SAVE CHANGES ✓</button>
+    </div>
+  </div>
+
+  <!-- RANKS MODAL -->
+  <div id="ranks-modal" style="display:none;position:absolute;inset:0;background:var(--bg-primary);z-index:150;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-primary);letter-spacing:1px;">All Ranks</div>
+      <button onclick="closeRanksModal()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:6px;" id="ranks-list"></div>
+    <div style="padding:16px 20px;border-top:1px solid var(--border);flex-shrink:0;">
+      <button onclick="closeRanksModal()" style="width:100%;padding:16px;background:transparent;border:1px solid var(--accent-1);border-radius:var(--radius);color:var(--accent-1);font-family:'Josefin Sans',sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">Return Home</button>
+    </div>
+  </div>
+
+  <!-- DEBUG MODAL -->
+  <div id="debug-modal" style="display:none;position:absolute;inset:0;background:var(--bg-primary);z-index:150;flex-direction:column;">
+
+    <!-- Password gate -->
+    <div id="debug-password-gate" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;padding:40px;">
+      <div style="font-family:'Cinzel',serif;font-size:20px;color:var(--text-primary);letter-spacing:2px;">🔒 Debug Tools</div>
+      <div style="font-size:12px;color:var(--text-muted);letter-spacing:1px;">ENTER PASSWORD</div>
+      <input id="debug-password-input" type="password" placeholder="••••••"
+        style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:14px 20px;color:var(--text-primary);font-size:18px;text-align:center;outline:none;width:100%;box-sizing:border-box;letter-spacing:4px;font-family:'Josefin Sans',sans-serif;"
+        onkeydown="if(event.key==='Enter')checkDebugPassword()" />
+      <div id="debug-password-error" style="font-size:11px;color:#ff4444;letter-spacing:1px;min-height:16px;"></div>
+      <button onclick="checkDebugPassword()" style="width:100%;padding:16px;background:var(--accent-1);border:none;border-radius:var(--radius-sm);font-family:'Josefin Sans',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;">ENTER</button>
+      <button onclick="closeDebugPage()" style="background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;letter-spacing:1px;">CANCEL</button>
+    </div>
+
+    <!-- Debug content (shown after password) -->
+    <div id="debug-content" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-primary);letter-spacing:1px;">🛠 Debug Tools</div>
+        <button onclick="closeDebugPage()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;">
+
+        <div class="quest-section-title">Onboarding</div>
+        <div class="settings-row" onclick="debugPreviewOnboarding()">
+          <div class="settings-row-left">
+            <div class="settings-row-label">Preview Onboarding</div>
+            <div class="settings-row-sub">Resets flag and shows onboarding — data untouched</div>
+          </div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+
+        <div class="quest-section-title" style="margin-top:8px;">History</div>
+        <div class="settings-row" id="debug-fake-btn-row" onclick="debugAddFakeHistory()">
+          <div class="settings-row-left">
+            <div class="settings-row-label" id="debug-fake-btn-label">Add 3 Months Seeded Data</div>
+            <div class="settings-row-sub" id="debug-fake-btn-sub">Seeds 90 days of random data for testing stats</div>
+          </div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+        <div class="settings-row" onclick="debugClearHistory()" style="border-color:#ff4444;">
+          <div class="settings-row-left">
+            <div class="settings-row-label" style="color:#ff4444;">Delete Seeded Data</div>
+            <div class="settings-row-sub">Removes seeded history and XP — keeps your real data, tasks and settings</div>
+          </div>
+          <div class="settings-row-arrow" style="color:#ff4444;">⚠</div>
+        </div>
+
+        <div id="debug-status" style="font-size:11px;color:#4CAF50;letter-spacing:1px;text-align:center;min-height:18px;"></div>
+
+        <!-- Console -->
+        <div class="quest-section-title" style="margin-top:8px;">Console</div>
+        <div style="display:flex;gap:8px;">
+          <input id="debug-console-input" type="text" placeholder="enter command..."
+            style="flex:1;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text-primary);font-size:13px;font-family:'Josefin Sans',sans-serif;letter-spacing:1px;outline:none;"
+            onkeydown="if(event.key==='Enter')runDebugCommand()" />
+          <button onclick="runDebugCommand()" style="padding:12px 16px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;cursor:pointer;">▶</button>
+        </div>
+        <div id="debug-console-output" style="font-size:12px;color:var(--text-muted);letter-spacing:0.5px;font-family:monospace;min-height:20px;padding:4px 2px;"></div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- TRACKER CUSTOMISE MODAL -->
+  <div id="tracker-customise-modal" style="display:none;position:absolute;inset:0;background:var(--bg-primary);z-index:300;flex-direction:column;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 12px;">
+      <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-primary);">Customise Tracker</div>
+      <button onclick="closeTrackerCustomise()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;">CHOOSE AN ICON</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;" id="tracker-emoji-grid"></div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;margin-top:4px;">OR ENTER YOUR OWN</div>
+      <input id="tracker-custom-emoji" type="text" maxlength="2" placeholder="🔮"
+        inputmode="text"
+        style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text-primary);font-size:28px;width:80px;text-align:center;outline:none;cursor:pointer;"
+        onfocus="this.value=''"
+        oninput="validateTrackerEmoji(this)" />
+      <div id="tracker-emoji-error" style="font-size:11px;color:#ff4444;letter-spacing:0.5px;min-height:16px;"></div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;margin-top:4px;">NAME</div>
+      <input id="tracker-custom-name" type="text" maxlength="20" placeholder="Daily Tracker"
+        style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text-primary);font-size:15px;font-family:'Josefin Sans',sans-serif;letter-spacing:1px;outline:none;width:100%;box-sizing:border-box;" />
+      <button onclick="saveTrackerCustomise()" style="margin-top:8px;padding:16px;background:var(--accent-1);border:none;border-radius:var(--radius-sm);font-family:'Josefin Sans',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;width:100%;">SAVE</button>
+    </div>
+  </div>
+
+  <!-- QUEST SETTINGS -->
+  <div id="quest-settings-modal" style="display:none;position:absolute;inset:0;background:var(--bg-primary);z-index:300;flex-direction:column;overflow-y:auto;">
+    <div style="display:flex;align-items:center;gap:12px;padding:20px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <button onclick="closeQuestSettings()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;padding:0;line-height:1;">‹</button>
+      <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-primary);">Quests</div>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:8px;">
+      <div class="settings-section" style="margin:0;">
+        <div class="settings-row" onclick="openMorningDeadlinePicker()">
+          <div class="settings-row-left">
+            <div class="settings-row-label">Morning Deadline</div>
+            <div class="settings-row-sub" id="morning-deadline-display">Complete morning list before 11:00 AM</div>
+          </div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIME PICKER MODAL -->
+  <div id="time-picker-modal" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.7);z-index:400;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
+    <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:20px;width:100%;max-width:320px;border:1px solid var(--border);">
+      <div id="time-picker-title" style="font-family:'Cinzel',serif;font-size:15px;color:var(--text-primary);text-align:center;">Set Time</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <!-- Hour -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <button onclick="adjustHour(1)" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;width:56px;height:36px;font-size:18px;cursor:pointer;color:var(--text-primary);">▲</button>
+          <div id="tp-hour" style="font-size:32px;font-family:'Josefin Sans',sans-serif;color:var(--text-primary);width:56px;text-align:center;letter-spacing:1px;">07</div>
+          <button onclick="adjustHour(-1)" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;width:56px;height:36px;font-size:18px;cursor:pointer;color:var(--text-primary);">▼</button>
+        </div>
+        <div style="font-size:32px;color:var(--text-muted);margin-bottom:2px;">:</div>
+        <!-- Minute -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <button onclick="adjustMinute(1)" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;width:56px;height:36px;font-size:18px;cursor:pointer;color:var(--text-primary);">▲</button>
+          <div id="tp-minute" style="font-size:32px;font-family:'Josefin Sans',sans-serif;color:var(--text-primary);width:56px;text-align:center;letter-spacing:1px;">00</div>
+          <button onclick="adjustMinute(-1)" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;width:56px;height:36px;font-size:18px;cursor:pointer;color:var(--text-primary);">▼</button>
+        </div>
+        <!-- AM/PM -->
+        <div onclick="toggleAmPm()" id="tp-ampm" style="font-size:22px;font-family:'Josefin Sans',sans-serif;color:var(--accent-1);width:48px;text-align:center;letter-spacing:1px;cursor:pointer;background:var(--bg-elevated);border:1px solid var(--accent-1);border-radius:8px;padding:8px 0;user-select:none;">AM</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="closeTimePicker()" style="flex:1;padding:14px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Josefin Sans',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;color:var(--text-secondary);">CANCEL</button>
+        <button onclick="confirmTimePicker()" style="flex:1;padding:14px;background:var(--accent-1);border:none;border-radius:var(--radius-sm);font-family:'Josefin Sans',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA PRIVACY INFO -->
+  <div id="data-privacy-modal" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.7);z-index:400;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
+    <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:28px 24px;display:flex;flex-direction:column;gap:16px;max-width:340px;width:100%;border:1px solid var(--border);">
+      <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-primary);text-align:center;">Your Data Stays Yours</div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;letter-spacing:0.3px;">
+        Everything in this app — your tasks, streaks, stats, and history — is stored <strong style="color:var(--text-primary);">only on this device</strong>. Nothing is sent to a server. Nothing is stored in the cloud. No account required.
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;letter-spacing:0.3px;">
+        A lot of health apps on the App Store collect your data and profit from it. That's not something we're comfortable with. Your habits, routines, and health information are personal — they belong to you, not us.
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;letter-spacing:0.3px;">
+        Use the <strong style="color:var(--text-primary);">Export</strong> feature to back up your data anytime. If you ever switch devices, you're in full control of what moves with you.
+      </div>
+      <button onclick="closeDataPrivacyInfo()" style="margin-top:4px;padding:14px;background:var(--accent-1);border:none;border-radius:var(--radius-sm);font-family:'Josefin Sans',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;width:100%;">GOT IT</button>
+    </div>
+  </div>
+
+
+
+</div>
+
+<script>
+// ── STATE ──
+const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const LEVELS = [
+  { name: 'Dormant I',     min: 0,    max: 25   },
+  { name: 'Dormant II',    min: 25,   max: 75   },
+  { name: 'Dormant III',   min: 75,   max: 150  },
+  { name: 'Awakening I',   min: 150,  max: 250  },
+  { name: 'Awakening II',  min: 250,  max: 400  },
+  { name: 'Awakening III', min: 400,  max: 600  },
+  { name: 'Rising I',      min: 600,  max: 850  },
+  { name: 'Rising II',     min: 850,  max: 1150 },
+  { name: 'Rising III',    min: 1150, max: 1500 },
+  { name: 'Forged I',      min: 1500, max: 1900 },
+  { name: 'Forged II',     min: 1900, max: 2350 },
+  { name: 'Forged III',    min: 2350, max: 2850 },
+  { name: 'Ascendant I',   min: 2850, max: 3400 },
+  { name: 'Ascendant II',  min: 3400, max: 4000 },
+  { name: 'Ascendant III', min: 4000, max: 5000 },
+  { name: 'Legendary',     min: 5000, max: 99999 },
+];
+
+const LIST_META = [
+  { key: 'morning', label: 'Morning', emoji: '🌅' },
+  { key: 'day', label: 'Day', emoji: '☀️' },
+  { key: 'night', label: 'Night', emoji: '🌙' }
+];
+
+// Default tasks (placeholders — Phase 2 will make these configurable)
+const JIMMY_TASKS = {
+  morning: [
+    { id: 'm1', name: 'Make bed', category: 'mental' },
+    { id: 'm2', name: 'Clean room', category: 'mental' },
+    { id: 'm3', name: 'Drink water', category: 'nutritional' },
+    { id: 'm4', name: 'Stretch', category: 'physical' },
+    { id: 'm5', name: 'Breakfast', category: 'nutritional' },
+    { id: 'm6', name: 'Multivitamin', category: 'nutritional' },
+    { id: 'm7', name: 'Creatine', category: 'nutritional' },
+    { id: 'm8', name: 'Metamucil', category: 'nutritional' },
+    { id: 'm9', name: 'Brush teeth', category: 'mental' },
+    { id: 'm10', name: 'Journal', category: 'emotional' },
+    { id: 'm11', name: 'Reading', category: 'mental' },
+    { id: 'm12', name: 'Set intentions', category: 'emotional' },
+  ],
+  day: [
+    { id: 'd1', name: 'Lunch', category: 'nutritional' },
+    { id: 'd2', name: 'Stretch', category: 'physical' },
+    { id: 'd3', name: 'Walk', category: 'physical' },
+    { id: 'd4', name: 'Workout', category: 'physical' },
+    { id: 'd5', name: 'Dinner organised', category: 'mental' },
+    { id: 'd6', name: 'Shopping', category: 'physical' },
+    { id: 'd7', name: 'Talk to family member', category: 'social' },
+    { id: 'd8', name: 'Journal', category: 'emotional' },
+    { id: 'd9', name: 'Spend time outside', category: 'physical' },
+    { id: 'd10', name: 'Midday water', category: 'nutritional' },
+    { id: 'd11', name: 'Something creative', category: 'emotional' },
+    { id: 'd12', name: 'Check in with a friend', category: 'social' },
+  ],
+  night: [
+    { id: 'n1', name: 'Shower', category: 'physical' },
+    { id: 'n2', name: 'Skincare', category: 'physical' },
+    { id: 'n3', name: 'Dinner', category: 'nutritional' },
+    { id: 'n4', name: 'Brush teeth', category: 'mental' },
+    { id: 'n5', name: 'Lay out clothes', category: 'mental' },
+    { id: 'n6', name: 'Gratitude reflection', category: 'emotional' },
+    { id: 'n7', name: 'Tidy up', category: 'mental' },
+  ]
+};
+
+let state = {
+  wakeLogged: false,
+  wakeTime: null,
+  wakeGoal: '07:00',
+  morningDeadline: '11:00',
+  currentList: 'morning',
+  tasks: { morning: [], day: [], night: [] },
+  taskStatus: { morning: {}, day: {}, night: {} },
+  listComplete: { morning: false, day: false, night: false },
+  streak: 0,
+  bestStreak: 0,
+  totalXP: 0,
+  resetTime: '02:00',
+  broccoli: 0,
+  broccoliEnabled: false,
+  trackerEmoji: '🥦',
+  trackerName: 'Broccoli',
+  morningStreak: 0,
+  trophies: [],
+  permanentTheme: null,
+  history: [],
+  dayComplete: false,
+  savedPhrase: null,
+  lastResetDate: null,
+  jimmyMode: false,
+  statsPctMode: false,
+  taskEditMode: false,
+  skippedYesterday: {}
+};
+
+// Load from storage
+async function loadState() {
+  try {
+    const saved = localStorage.getItem('character-sheet-state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+      // Always reset transient UI state
+      state.taskEditMode = false;
+      // Migrate old default name
+      if (state.trackerName === 'Daily Tracker') state.trackerName = 'Broccoli';
+      checkDailyReset();
+    }
+  } catch(e) {
+    // Fresh start
+  }
+}
+
+async function saveState() {
+  try {
+    localStorage.setItem('character-sheet-state', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function checkDailyReset() {
+  const now = new Date();
+  const [resetH, resetM] = (state.resetTime || '02:00').split(':').map(Number);
+
+  // Build a "reset datetime" for today — the moment the new day starts
+  // If current time is BEFORE reset time, the current day started yesterday
+  const resetToday = new Date(now);
+  resetToday.setHours(resetH, resetM, 0, 0);
+
+  const currentDayStart = now >= resetToday
+    ? resetToday  // we're past reset time today, so today's day started at resetToday
+    : new Date(resetToday.getTime() - 24 * 60 * 60 * 1000); // before reset, day started yesterday
+
+  const currentDayKey = currentDayStart.toISOString().split('T')[0] + '-' + resetH + '-' + resetM;
+
+  if (state.lastResetDate && state.lastResetDate !== currentDayKey) {
+    // New day — update skippedYesterday before wiping statuses
+    const newSkippedYesterday = {};
+    ['morning','day','night'].forEach(list => {
+      state.tasks[list].forEach(task => {
+        if (!task.flexi || task.allowConsecutiveSkips !== false) return;
+        const status = (state.taskStatus[list] || {})[task.id];
+        if (status === 'skip') {
+          newSkippedYesterday[task.id] = true;
+        } else if (status === 'complete') {
+          newSkippedYesterday[task.id] = false;
+        } else {
+          // carry forward existing value
+          newSkippedYesterday[task.id] = state.skippedYesterday[task.id] || false;
+        }
+      });
+    });
+    state.skippedYesterday = newSkippedYesterday;
+
+    state.wakeLogged = false;
+    state.taskStatus = { morning: {}, day: {}, night: {} };
+    state.listComplete = { morning: false, day: false, night: false };
+    state.currentList = 'morning';
+    state.dayComplete = false;
+    state.savedPhrase = null;
+    state.broccoli = 0;
+    state.wakeTime = null;
+  }
+
+  state.lastResetDate = currentDayKey;
+}
+
+// ── WAKE UP ──
+function to12Hour(time24) {
+  if (!time24) return '';
+  const [h, m] = time24.split(':').map(Number);
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+const wakeDisplay = document.getElementById('wake-time-display');
+const wakeInput = document.getElementById('wake-time-input');
+
+wakeDisplay.addEventListener('click', () => wakeInput.click());
+wakeInput.addEventListener('change', () => {
+  wakeDisplay.textContent = to12Hour(wakeInput.value);
+});
+
+function logWakeTime() {
+  state.wakeTime = wakeInput.value;
+  state.wakeLogged = true;
+  document.getElementById('wake-overlay').style.animation = 'fadeOut 0.4s ease forwards';
+  setTimeout(() => {
+    document.getElementById('wake-overlay').style.display = 'none';
+  }, 400);
+  saveState();
+  updateUI();
+  navigateTo('home');
+}
+
+// Add fadeOut keyframe
+const style = document.createElement('style');
+style.textContent = `@keyframes fadeOut { to { opacity:0; transform:translateY(-10px); } }`;
+document.head.appendChild(style);
+
+// ── NAVIGATION ──
+const PAGES = ['home', 'tasks', 'stats', 'quests', 'settings'];
+let _currentPageIndex = 0;
+
+function getNavItemCenter(page) {
+  const nav = document.getElementById('nav-' + page);
+  const bar = document.getElementById('bottom-nav');
+  if (!nav || !bar) return 0;
+  const navRect = bar.getBoundingClientRect();
+  const itemRect = nav.getBoundingClientRect();
+  return itemRect.left - navRect.left + itemRect.width / 2;
+}
+
+function updateNavGlow(index, immediate) {
+  const page = PAGES[index];
+  const glow = document.getElementById('nav-glow');
+  if (!glow) return;
+  if (immediate) {
+    glow.style.transition = 'none';
+    glow.style.left = getNavItemCenter(page) + 'px';
+    glow.style.opacity = '0.18';
+    requestAnimationFrame(() => glow.style.transition = 'opacity 0.2s ease');
+    return;
+  }
+  // Fade out, teleport, fade in
+  glow.style.opacity = '0';
+  setTimeout(() => {
+    glow.style.transition = 'none';
+    glow.style.left = getNavItemCenter(page) + 'px';
+    requestAnimationFrame(() => {
+      glow.style.transition = 'opacity 0.2s ease';
+      glow.style.opacity = '0.18';
+    });
+  }, 200);
+}
+
+function navigateTo(page, immediate) {
+  const index = PAGES.indexOf(page);
+  if (index === -1) return;
+  _currentPageIndex = index;
+
+  // Slide pages container
+  const container = document.getElementById('pages-container');
+  if (immediate) container.style.transition = 'none';
+  container.style.transform = `translateX(-${index * 20}%)`;
+  if (immediate) requestAnimationFrame(() => container.style.transition = '');
+
+  // Update all pages visibility/active state
+  PAGES.forEach((p, i) => {
+    const pageEl = document.getElementById('page-' + p);
+    if (!pageEl) return;
+    pageEl.classList.toggle('active', i === index);
+    pageEl.style.display = 'flex';
+  });
+
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + page)?.classList.add('active');
+
+  // Move glow
+  updateNavGlow(index, immediate);
+
+  if (page === 'tasks') renderTaskList();
+  if (page === 'stats') renderGraph('today');
+}
+
+// ── SWIPE NAVIGATION ──
+(function initSwipe() {
+  let startX = 0, startY = 0, locked = null, _swipeStartTime = 0;
+
+  function getContainer() { return document.getElementById('pages-container'); }
+  function getMain() { return document.getElementById('main'); }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const main = getMain();
+
+    main.addEventListener('touchstart', e => {
+      if (e.target.closest('[id$="-modal"]')) return;
+      if (_dragEl) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      locked = null;
+      _swipeStartTime = Date.now();
+      getContainer().style.transition = 'none';
+    }, { passive: true });
+
+    main.addEventListener('touchmove', e => {
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+
+      if (locked === null) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        locked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+      }
+      if (locked !== 'h') return;
+      e.preventDefault();
+
+      const w = getMain().offsetWidth;
+      const maxIndex = PAGES.length - 1;
+      let offset = (_currentPageIndex * w) - dx;
+      // Edge resistance
+      if (offset < 0) offset *= 0.15;
+      if (offset > maxIndex * w) offset = maxIndex * w + (offset - maxIndex * w) * 0.15;
+
+      getContainer().style.transform = `translateX(-${(offset / w) * 20}%)`;
+    }, { passive: false });
+
+    main.addEventListener('touchend', e => {
+      if (locked !== 'h') return;
+      const dx = e.changedTouches[0].clientX - startX;
+      const w = getMain().offsetWidth;
+      const threshold = w * 0.35;
+      let newIndex = _currentPageIndex;
+      if (dx < -threshold) newIndex = Math.min(_currentPageIndex + 1, PAGES.length - 1);
+      if (dx > threshold) newIndex = Math.max(_currentPageIndex - 1, 0);
+      getContainer().style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
+      navigateTo(PAGES[newIndex]);
+    }, { passive: true });
+  });
+})();
+
+// ── DAY THEME ──
+function applyDayTheme() {
+  const day = DAYS[new Date().getDay()];
+  const theme = state.permanentTheme || day;
+  const app = document.getElementById('app');
+  DAYS.forEach(d => app.classList.remove('theme-' + d));
+  app.classList.add('theme-' + theme);
+  document.getElementById('header-day').textContent = DAY_NAMES[new Date().getDay()];
+
+  // Apply contrast colours dynamically after theme vars are set
+  requestAnimationFrame(() => {
+    const accent1 = getComputedStyle(app).getPropertyValue('--accent-1').trim();
+    const contrast = getContrastColor(accent1);
+
+    // Complete button
+    const completeBtn = document.getElementById('complete-btn');
+    if (completeBtn) completeBtn.style.color = contrast;
+
+    // Active stats tab
+    const activeTab = document.querySelector('.stats-tab.active');
+    if (activeTab) activeTab.style.color = contrast;
+
+    // Wake btn
+    const wakeBtn = document.querySelector('.wake-btn');
+    if (wakeBtn) wakeBtn.style.color = contrast;
+  });
+}
+
+function toggleRotation() {
+  if (state.permanentTheme) {
+    state.permanentTheme = null;
+  } else {
+    state.permanentTheme = DAYS[new Date().getDay()];
+  }
+  saveState();
+  updateRotationUI();
+  applyDayTheme();
+  updateUI();
+  renderGraph('today');
+}
+
+function selectTheme(day) {
+  if (!state.permanentTheme) return;
+  state.permanentTheme = day;
+  saveState();
+  updateRotationUI();
+  applyDayTheme();
+  updateUI();
+  renderGraph('today');
+}
+
+function updateRotationUI() {
+  const isRotation = !state.permanentTheme;
+  const knob = document.getElementById('rotation-knob');
+  const toggle = document.getElementById('rotation-toggle');
+  const label = document.getElementById('rotation-label');
+  const swatches = document.querySelectorAll('.theme-swatch');
+
+  if (knob) knob.style.transform = isRotation ? 'translateX(18px)' : 'translateX(0px)';
+  if (toggle) toggle.style.background = isRotation ? '#4CAF50' : 'var(--bg-elevated)';
+  if (label) label.textContent = isRotation ? 'Each day uses its own colour palette' : 'Using a fixed theme every day';
+
+  swatches.forEach(s => {
+    s.classList.toggle('selected', s.dataset.day === state.permanentTheme);
+    s.style.opacity = isRotation ? '0.35' : '1';
+    s.style.pointerEvents = isRotation ? 'none' : 'all';
+    s.style.cursor = isRotation ? 'default' : 'pointer';
+  });
+}
+
+// ── TASK LIST ──
+function getCurrentListMeta() {
+  return LIST_META.find(l => l.key === state.currentList);
+}
+
+function renderTaskList() {
+  const dayCompleteEl = document.getElementById('day-complete-state');
+  const listStateEl = document.getElementById('list-state');
+
+  if (state.dayComplete) {
+    const phrase = DAY_COMPLETE_PHRASES[Math.floor(Math.random() * DAY_COMPLETE_PHRASES.length)];
+    const now = new Date();
+    document.getElementById('complete-phrase').textContent = state.savedPhrase || phrase;
+    document.getElementById('complete-date').textContent = now.toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    // XP today — from completed tasks
+    const allStatuses = { ...state.taskStatus.morning, ...state.taskStatus.day, ...state.taskStatus.night };
+    const allTasks = [...state.tasks.morning, ...state.tasks.day, ...state.tasks.night];
+    const xpToday = allTasks.filter(t => allStatuses[t.id] === 'complete').length;
+    document.getElementById('dc-xp').textContent = '+' + xpToday;
+    document.getElementById('dc-streak').textContent = state.streak + '🔥';
+    document.getElementById('dc-broc').textContent = (state.broccoli || 0) + '🥦';
+
+    // Category score bars
+    const cats = ['physical','mental','emotional','social','nutritional'];
+    const catNames = ['Physical','Mental','Emotional','Social','Nutritional'];
+    const colors = getCatColors();
+    const dcCats = document.getElementById('dc-cat-scores');
+    dcCats.innerHTML = '';
+    cats.forEach((cat, i) => {
+      const relevant = allTasks.filter(t => t.category === cat && (allStatuses[t.id] !== 'skip' || skipDeducts(t)));
+      const earned = relevant.filter(t => allStatuses[t.id] === 'complete').length;
+      const possible = relevant.length;
+      const pct = possible ? Math.round((earned / possible) * 100) : 0;
+      const row = document.createElement('div');
+      row.className = 'dc-cat-row';
+      row.innerHTML = `
+        <div class="dc-cat-name">${catNames[i]}</div>
+        <div class="dc-cat-bar-track"><div class="dc-cat-bar-fill" style="width:0%;background:${colors[i]}" data-pct="${pct}"></div></div>
+        <div class="dc-cat-score">${earned}/${possible}</div>
+      `;
+      dcCats.appendChild(row);
+    });
+    // Animate bars after render
+    requestAnimationFrame(() => {
+      dcCats.querySelectorAll('.dc-cat-bar-fill').forEach(el => {
+        el.style.width = el.dataset.pct + '%';
+      });
+    });
+
+    // Streak milestone callout
+    const milestones = [
+      { days: 3,   icon: '🥉', text: '3 Day Streak!' },
+      { days: 7,   icon: '🥈', text: '7 Day Streak!' },
+      { days: 14,  icon: '🥇', text: '2 Week Streak!' },
+      { days: 30,  icon: '💎', text: '30 Day Streak!' },
+      { days: 100, icon: '👑', text: '100 Day Streak!' },
+    ];
+    const milestone = milestones.find(m => state.streak === m.days);
+    const milestoneEl = document.getElementById('dc-milestone');
+    if (milestone) {
+      document.getElementById('dc-milestone-icon').textContent = milestone.icon;
+      document.getElementById('dc-milestone-text').textContent = milestone.text;
+      milestoneEl.style.display = 'block';
+    } else {
+      milestoneEl.style.display = 'none';
+    }
+
+    dayCompleteEl.style.display = 'flex';
+    listStateEl.style.display = 'none';
+    return;
+  }
+
+  dayCompleteEl.style.display = 'none';
+  listStateEl.style.display = 'flex';
+
+  const meta = getCurrentListMeta();
+  const tasks = state.tasks[state.currentList];
+  const statuses = state.taskStatus[state.currentList];
+
+  document.getElementById('list-title').textContent = meta.emoji + ' ' + meta.label;
+  document.getElementById('complete-btn').textContent = `Complete ${meta.label} ✓`;
+
+  const done = tasks.filter(t => statuses[t.id] === 'complete' || statuses[t.id] === 'skip').length;
+  document.getElementById('list-progress').textContent = done + '/' + tasks.length;
+
+  const listEl = document.getElementById('task-list');
+  listEl.innerHTML = '';
+  const editMode = state.taskEditMode;
+
+  tasks.forEach((task, index) => {
+    const status = statuses[task.id] || 'pending';
+    const item = document.createElement('div');
+    item.className = 'task-item' + (status === 'complete' ? ' completed' : status === 'skip' ? ' skipped' : '');
+    item.dataset.taskId = task.id;
+    item.dataset.index = index;
+
+    if (editMode) {
+      item.style.cssText += ';touch-action:none;user-select:none;-webkit-user-select:none;';
+      item.draggable = false;
+
+      const handle = document.createElement('div');
+      handle.style.cssText = 'font-size:16px;color:var(--text-muted);padding:0 4px;cursor:grab;flex-shrink:0;user-select:none;';
+      handle.textContent = '⠿';
+      handle.addEventListener('pointerdown', (e) => onTaskDragStart(e, item));
+
+      const info = document.createElement('div');
+      info.className = 'task-info';
+      info.innerHTML = `<div class="task-name">${task.name}</div><div class="task-cat">${task.category}</div>`;
+
+      const btnRow = document.createElement('div');
+      btnRow.style.cssText = 'display:flex;align-items:center;gap:6px;flex-shrink:0;';
+
+      const editBtn = document.createElement('button');
+      editBtn.style.cssText = 'background:none;border:1px solid #f0c040;border-radius:6px;color:#f0c040;font-size:12px;cursor:pointer;padding:5px 9px;letter-spacing:1px;font-family:"Josefin Sans",sans-serif;';
+      editBtn.textContent = '✎';
+      editBtn.onclick = () => openEditTask(task.id, state.currentList);
+
+      const delBtn = document.createElement('button');
+      delBtn.style.cssText = 'background:none;border:1px solid #ff4444;border-radius:6px;color:#ff4444;font-size:12px;cursor:pointer;padding:5px 9px;';
+      delBtn.textContent = '✕';
+      delBtn.onclick = () => deleteTask(task.id);
+
+      btnRow.appendChild(editBtn);
+      btnRow.appendChild(delBtn);
+
+      item.appendChild(handle);
+      item.appendChild(info);
+      item.appendChild(btnRow);
+    } else {
+      // Normal mode
+      const check = document.createElement('div');
+      check.className = 'task-check' + (status === 'complete' ? ' done' : '');
+
+      const info = document.createElement('div');
+      info.className = 'task-info';
+      const tagState = flexiTagState(task);
+      const tagHtml = tagState ? `<span class="task-flexi-tag ${tagState}">FLEXI</span>` : '';
+      info.innerHTML = `<div class="task-name">${task.name}</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px;"><div class="task-cat">${task.category}</div>${tagHtml}</div>`;
+
+      // Wide tap zone covers check + info
+      const tapZone = document.createElement('div');
+      tapZone.style.cssText = 'display:flex;align-items:center;gap:12px;flex:1;cursor:pointer;min-width:0;';
+      tapZone.appendChild(check);
+      tapZone.appendChild(info);
+      tapZone.onclick = () => toggleTask(task.id);
+
+      const skipBtn = document.createElement('button');
+      skipBtn.className = 'task-skip' + (status === 'skip' ? ' undo' : '');
+      skipBtn.textContent = status === 'skip' ? 'Undo' : 'Skip';
+      skipBtn.onclick = () => toggleSkip(task.id);
+
+      item.appendChild(tapZone);
+      if (status !== 'complete') item.appendChild(skipBtn);
+    }
+
+    listEl.appendChild(item);
+  });
+
+  // Add task button is handled by sticky #add-task-bar, not inline
+
+  updateCompleteBtn();
+  updateHomeProgress();
+}
+
+function toggleEditMode() {
+  state.taskEditMode = !state.taskEditMode;
+  if (!state.taskEditMode) window._lastDeletedTask = null;
+  const btn = document.getElementById('edit-tasks-btn');
+  const undoBtn = document.getElementById('edit-undo-btn');
+  if (btn) {
+    btn.textContent = state.taskEditMode ? 'DONE' : 'MANAGE';
+    btn.style.color = state.taskEditMode ? '#4CAF50' : '#f0c040';
+    btn.style.borderColor = state.taskEditMode ? '#4CAF50' : '#f0c040';
+    btn.style.background = 'transparent';
+    btn.style.border = `2px solid ${state.taskEditMode ? '#4CAF50' : '#f0c040'}`;
+  }
+  if (undoBtn) undoBtn.style.display = state.taskEditMode ? 'inline-block' : 'none';
+  const completeBtn = document.getElementById('complete-btn-wrap');
+  if (completeBtn) completeBtn.style.display = state.taskEditMode ? 'none' : '';
+  const addBar = document.getElementById('add-task-bar');
+  if (addBar) addBar.style.display = state.taskEditMode ? 'block' : 'none';
+  renderTaskList();
+}
+
+function undoEditMode() {
+  if (!window._lastDeletedTask) return;
+  const { task, list, index } = window._lastDeletedTask;
+  state.tasks[list].splice(index, 0, task);
+  window._lastDeletedTask = null;
+  saveState();
+  updateUndoBtn();
+  renderTaskList();
+}
+
+function deleteTask(taskId) {
+  const list = state.currentList;
+  const index = state.tasks[list].findIndex(t => t.id === taskId);
+  if (index === -1) return;
+  window._lastDeletedTask = { task: state.tasks[list][index], list, index };
+  state.tasks[list].splice(index, 1);
+  delete state.taskStatus[list][taskId];
+  saveState();
+  updateUndoBtn();
+  renderTaskList();
+}
+
+function updateUndoBtn() {
+  const undoBtn = document.getElementById('edit-undo-btn');
+  if (!undoBtn) return;
+  const hasUndo = !!window._lastDeletedTask;
+  undoBtn.style.color = hasUndo ? 'var(--bg-primary)' : 'var(--text-muted)';
+  undoBtn.style.background = hasUndo ? 'var(--accent-2)' : 'none';
+  undoBtn.style.borderColor = hasUndo ? 'var(--accent-2)' : 'var(--border)';
+}
+
+let _dragSrcIndex = null;
+let _dragEl = null;
+let _dragClone = null;
+let _dragOffsetY = 0;
+let _dragItems = [];
+let _dragCurrentIndex = null;
+
+function onTaskDragStart(e, item) {
+  e.preventDefault();
+  item = item || e.currentTarget;
+  const list = state.tasks[state.currentList];
+  _dragSrcIndex = parseInt(item.dataset.index);
+  _dragCurrentIndex = _dragSrcIndex;
+  _dragEl = item;
+  _dragItems = Array.from(document.getElementById('task-list').querySelectorAll('.task-item'));
+
+  const rect = item.getBoundingClientRect();
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  _dragOffsetY = clientY - rect.top;
+
+  // Create floating clone
+  _dragClone = item.cloneNode(true);
+  _dragClone.style.cssText = `
+    position:fixed;left:${rect.left}px;top:${rect.top}px;
+    width:${rect.width}px;pointer-events:none;z-index:9999;
+    opacity:0.95;box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    border-radius:var(--radius-sm);background:var(--bg-elevated);
+    transition:none;
+  `;
+  document.body.appendChild(_dragClone);
+
+  item.style.opacity = '0';
+
+  document.addEventListener('pointermove', onTaskDragMove, { passive: false });
+  document.addEventListener('pointerup', onTaskDragEnd);
+}
+
+function onTaskDragMove(e) {
+  if (!_dragClone) return;
+  e.preventDefault();
+  const clientY = e.clientY;
+
+  // Move clone
+  const listEl = document.getElementById('task-list');
+  const listRect = listEl.getBoundingClientRect();
+  const cloneRect = _dragClone.getBoundingClientRect();
+  _dragClone.style.top = (clientY - _dragOffsetY) + 'px';
+
+  // Determine which slot we're hovering over
+  let newIndex = _dragCurrentIndex;
+  _dragItems.forEach((item, i) => {
+    if (item === _dragEl) return;
+    const r = item.getBoundingClientRect();
+    const mid = r.top + r.height / 2;
+    if (clientY > mid && i > _dragCurrentIndex) newIndex = i;
+    if (clientY < mid && i < _dragCurrentIndex) newIndex = i;
+  });
+
+  if (newIndex !== _dragCurrentIndex) {
+    _dragCurrentIndex = newIndex;
+    // Slide items to show gap
+    _dragItems.forEach((item, i) => {
+      if (item === _dragEl) { item.style.transform = ''; return; }
+      const itemH = item.getBoundingClientRect().height + 8;
+      if (_dragSrcIndex < _dragCurrentIndex) {
+        // Moving down — items between src+1 and current slide up
+        item.style.transform = (i > _dragSrcIndex && i <= _dragCurrentIndex) ? `translateY(-${itemH}px)` : '';
+      } else {
+        // Moving up — items between current and src-1 slide down
+        item.style.transform = (i >= _dragCurrentIndex && i < _dragSrcIndex) ? `translateY(${itemH}px)` : '';
+      }
+      item.style.transition = 'transform 0.15s ease';
+    });
+  }
+}
+
+function onTaskDragEnd() {
+  document.removeEventListener('pointermove', onTaskDragMove);
+  document.removeEventListener('pointerup', onTaskDragEnd);
+
+  if (_dragClone) { _dragClone.remove(); _dragClone = null; }
+
+  // Reset transforms
+  _dragItems.forEach(item => { item.style.transform = ''; item.style.transition = ''; item.style.opacity = ''; });
+
+  // Apply reorder if moved
+  if (_dragCurrentIndex !== null && _dragCurrentIndex !== _dragSrcIndex) {
+    const list = state.currentList;
+    const tasks = state.tasks[list];
+    const moved = tasks.splice(_dragSrcIndex, 1)[0];
+    tasks.splice(_dragCurrentIndex, 0, moved);
+    saveState();
+  }
+
+  _dragEl = null;
+  _dragSrcIndex = null;
+  _dragCurrentIndex = null;
+  _dragItems = [];
+
+  renderTaskList();
+}
+
+// Returns true if skipping this task should count against the score
+function skipDeducts(task) {
+  if (!task.flexi) return true; // non-flexi always deducts
+  if (task.allowConsecutiveSkips !== false) return false; // flexi, consecutive allowed
+  // flexi, no consecutive — deducts only if skipped yesterday
+  return !!(state.skippedYesterday && state.skippedYesterday[task.id]);
+}
+
+// Returns flexi tag state: null, 'green', or 'red'
+function flexiTagState(task) {
+  if (!task.flexi) return null;
+  if (task.allowConsecutiveSkips !== false) return 'green';
+  return (state.skippedYesterday && state.skippedYesterday[task.id]) ? 'red' : 'green';
+}
+
+function toggleTask(taskId) {
+  const statuses = state.taskStatus[state.currentList];
+  if (statuses[taskId] === 'skip') return;
+  statuses[taskId] = statuses[taskId] === 'complete' ? 'pending' : 'complete';
+  if (statuses[taskId] === 'complete') haptic('tick');
+  saveState();
+  renderTaskList();
+}
+
+function toggleSkip(taskId) {
+  const statuses = state.taskStatus[state.currentList];
+  if (statuses[taskId] === 'complete') return;
+  statuses[taskId] = statuses[taskId] === 'skip' ? 'pending' : 'skip';
+  saveState();
+  renderTaskList();
+}
+
+function updateCompleteBtn() {
+  const tasks = state.tasks[state.currentList];
+  const statuses = state.taskStatus[state.currentList];
+  const allResolved = tasks.every(t => statuses[t.id] === 'complete' || statuses[t.id] === 'skip');
+  const btn = document.getElementById('complete-btn');
+  btn.classList.toggle('ready', allResolved);
+}
+
+function completeList() {
+  haptic('complete');
+  state.listComplete[state.currentList] = true;
+  // Award XP — 1 per completed task
+  const tasks = state.tasks[state.currentList];
+  const statuses = state.taskStatus[state.currentList];
+  const completed = tasks.filter(t => statuses[t.id] === 'complete').length;
+  state.totalXP += completed;
+
+  // Advance list
+  if (state.currentList === 'morning') {
+    // Track morning person streak — must complete by morningDeadline
+    const now = new Date();
+    const [dh, dm] = (state.morningDeadline || '11:00').split(':').map(Number);
+    const thresholdMins = dh * 60 + dm;
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    if (nowMins <= thresholdMins) {
+      state.morningStreak = (state.morningStreak || 0) + 1;
+    } else {
+      state.morningStreak = 0;
+    }
+    // Award morning person trophies
+    const morningTrophies = [
+      { days: 3,  icon: '🌤️', name: 'Early Riser — 3 Days' },
+      { days: 7,  icon: '☀️', name: 'Morning Person — 7 Days' },
+      { days: 14, icon: '🌞', name: 'Dawn Warrior — 14 Days' },
+      { days: 30, icon: '🌈', name: 'Morning Master — 30 Days' },
+    ];
+    morningTrophies.forEach(t => {
+      if ((state.morningStreak || 0) >= t.days) awardTrophy(t.icon, t.name);
+    });
+    state.currentList = 'day';
+    state.taskEditMode = false;
+    saveState();
+    updateUI();
+    launchParticles();
+    renderTaskList();
+  } else if (state.currentList === 'day') {
+    state.currentList = 'night';
+    state.taskEditMode = false;
+    saveState();
+    updateUI();
+    launchParticles();
+    renderTaskList();
+  } else if (state.currentList === 'night') {
+    // Only night completes the streak
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    archiveDay();
+    saveState();
+    updateUI();
+    launchParticles();
+    showDayComplete();
+  }
+}
+
+function launchParticles() {
+  const container = document.getElementById('app');
+  const colors = [
+    getComputedStyle(document.documentElement).getPropertyValue('--accent-1').trim(),
+    getComputedStyle(document.documentElement).getPropertyValue('--accent-2').trim(),
+    getComputedStyle(document.documentElement).getPropertyValue('--accent-3').trim(),
+    '#ffffff', '#4CAF50'
+  ];
+
+  for (let i = 0; i < 60; i++) {
+    const particle = document.createElement('div');
+    const size = Math.random() * 8 + 4;
+    const isCircle = Math.random() > 0.5;
+    particle.style.cssText = `
+      position: absolute;
+      width: ${size}px;
+      height: ${size}px;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      border-radius: ${isCircle ? '50%' : '2px'};
+      left: ${Math.random() * 100}%;
+      top: -10px;
+      z-index: 200;
+      pointer-events: none;
+      opacity: 1;
+    `;
+    container.appendChild(particle);
+
+    const duration = Math.random() * 1200 + 800;
+    const drift = (Math.random() - 0.5) * 120;
+    const rotation = Math.random() * 720 - 360;
+
+    particle.animate([
+      { transform: `translateY(0px) translateX(0px) rotate(0deg)`, opacity: 1 },
+      { transform: `translateY(${window.innerHeight * 0.6 + Math.random() * 200}px) translateX(${drift}px) rotate(${rotation}deg)`, opacity: 0 }
+    ], {
+      duration,
+      delay: Math.random() * 400,
+      easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      fill: 'forwards'
+    }).onfinish = () => particle.remove();
+  }
+}
+
+function archiveDay() {
+  const cats = ['physical','mental','emotional','social','nutritional'];
+  const scores = {};
+  cats.forEach(c => { scores[c] = { earned: 0, possible: 0 }; });
+
+  ['morning','day','night'].forEach(list => {
+    state.tasks[list].forEach(task => {
+      const status = state.taskStatus[list][task.id];
+      const deducts = skipDeducts(task);
+      if (status !== 'skip' || deducts) {
+        scores[task.category].possible++;
+        if (status === 'complete') scores[task.category].earned++;
+      }
+    });
+  });
+
+  state.history.push({
+    date: new Date().toDateString(),
+    wakeTime: state.wakeTime,
+    scores,
+    xp: state.totalXP,
+    broccoli: state.broccoli || 0
+  });
+
+  // Broccoli resets at daily reset time, not on day complete
+
+  // ── Award streak trophies ──
+  const streakTrophies = [
+    { days: 3,  icon: '🥉', name: '3 Day Streak' },
+    { days: 7,  icon: '🥈', name: '7 Day Streak' },
+    { days: 14, icon: '🥇', name: '14 Day Streak' },
+    { days: 30, icon: '💎', name: '30 Day Streak' },
+    { days: 100,icon: '👑', name: 'Century Streak' },
+    { days: 365,icon: '🏆', name: 'Year of Discipline' },
+  ];
+  streakTrophies.forEach(t => {
+    if (state.streak >= t.days) awardTrophy(t.icon, t.name);
+  });
+
+  // ── Award XP trophies ──
+  const xpTrophies = [
+    { xp: 50,   icon: '⚡', name: 'First Steps' },
+    { xp: 150,  icon: '🔥', name: 'Building Momentum' },
+    { xp: 400,  icon: '⚔️', name: 'Grinding' },
+    { xp: 900,  icon: '🛡️', name: 'Dedicated' },
+    { xp: 2000, icon: '🌟', name: 'Legendary' },
+  ];
+  xpTrophies.forEach(t => {
+    if (state.totalXP >= t.xp) awardTrophy(t.icon, t.name);
+  });
+}
+
+// ── HOME UPDATE ──
+const DAY_COMPLETE_QUIPS = [
+  "You actually did it. Every single one.",
+  "Look at you, going the whole way.",
+  "Today's version of you showed up hard.",
+  "Not a single task left standing.",
+  "Full send. No excuses needed.",
+  "This is what discipline looks like.",
+  "The list didn't stand a chance.",
+  "Future you is already grateful.",
+  "That's a complete. Own it.",
+  "You made today count.",
+  "Absolutely locked in today.",
+  "All of it. Done. Dusted.",
+  "Zero tasks remaining. Zero.",
+  "You just built a better habit.",
+  "Momentum looks good on you.",
+  "Clean sweep. That's rare.",
+  "You didn't leave anything on the table.",
+  "Today was yours from start to finish.",
+  "Every box ticked. Every single one.",
+  "The version of you that didn't want to do this is very embarrassed right now.",
+  "That's a perfect run. Well played.",
+  "It all got done. You did that.",
+  "Flawless execution today.",
+  "You could've skipped. You didn't.",
+  "Nothing slipped through today.",
+  "All tasks accounted for. Mission complete.",
+  "Not a single one left behind.",
+  "Today you were genuinely unstoppable.",
+  "100%. No notes.",
+  "Fully loaded, fully finished.",
+  "You made this look easy.",
+  "All the way through. Nice work.",
+  "Honestly? Impressive.",
+  "Completed the whole thing. Don't downplay that.",
+  "This is exactly what a good day looks like.",
+  "The checklist is weeping tears of joy.",
+  "Everything ticked off. You're a machine.",
+  "You didn't negotiate with yourself today. You just did it.",
+  "Start to finish, you held it together.",
+  "Full completion. That's the whole goal.",
+  "Today you were the main character.",
+  "Nothing held you back today.",
+  "That was a 10/10 effort.",
+  "You cleared the board. Feel that.",
+  "All done and dusted. Respect.",
+  "Today you showed yourself what's possible.",
+  "You ran the table. Every last task.",
+  "Completely finished. Not almost — completely.",
+  "The streak noticed. The body noticed. Good work.",
+  "You built something real today."
+];
+let _quipIndex = null;
+let _quipOrder = [];
+function getDayCompleteQuip() {
+  if (_quipOrder.length === 0) {
+    _quipOrder = [...Array(DAY_COMPLETE_QUIPS.length).keys()].sort(() => Math.random() - 0.5);
+  }
+  if (_quipIndex === null || _quipIndex >= _quipOrder.length) _quipIndex = 0;
+  return DAY_COMPLETE_QUIPS[_quipOrder[_quipIndex++]];
+}
+
+function updateHomeProgress() {
+  const meta = getCurrentListMeta();
+  const tasks = state.tasks[state.currentList];
+  const statuses = state.taskStatus[state.currentList];
+  const activeTasks = tasks.filter(t => statuses[t.id] !== 'skip');
+  const done = activeTasks.filter(t => statuses[t.id] === 'complete').length;
+  const total = activeTasks.length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+
+  // Ring
+  const circumference = 226;
+  const offset = circumference - (pct / 100) * circumference;
+  document.getElementById('progress-ring').style.strokeDashoffset = offset;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-list-label').textContent = meta.emoji + ' ' + meta.label + ' List';
+  if (pct === 100) {
+    document.getElementById('progress-detail').textContent = getDayCompleteQuip();
+  } else {
+    document.getElementById('progress-detail').textContent = done + ' of ' + total + ' tasks complete';
+  }
+
+  // Stat scores
+  updateStatScores();
+}
+
+function updateStatScores() {
+  const cats = ['physical','mental','emotional','social','nutritional'];
+  const scores = {};
+  cats.forEach(c => scores[c] = { earned: 0, possible: 0 });
+
+  ['morning','day','night'].forEach(list => {
+    state.tasks[list].forEach(task => {
+      const status = state.taskStatus[list][task.id];
+      const deducts = skipDeducts(task);
+      // Count as possible if not skipped, OR if skipped but deducts (non-flexi / warned flexi)
+      if (status !== 'skip' || deducts) {
+        scores[task.category].possible++;
+        if (status === 'complete') scores[task.category].earned++;
+      }
+    });
+  });
+
+  const statColors = getCatColors();
+  const pctMode = state.statsPctMode;
+
+  cats.forEach((cat, i) => {
+    const el = document.getElementById('stat-' + cat);
+    const barEl = el?.closest('.stat-row-item')?.querySelector('.stat-bar-fill');
+    const pct = scores[cat].possible ? Math.round((scores[cat].earned / scores[cat].possible) * 100) : 0;
+    if (el) el.textContent = pctMode ? pct + '%' : scores[cat].earned + '/' + scores[cat].possible;
+    if (barEl) {
+      barEl.style.width = pct + '%';
+      barEl.style.background = statColors[i];
+    }
+  });
+
+  const indicator = document.getElementById('stats-mode-indicator');
+  if (indicator) indicator.textContent = pctMode ? '% PCT' : '# RAW';
+}
+
+function onStatsCardsTap() {
+  if (statsCurrentTab === 'cats') toggleStatsMode();
+}
+
+function toggleStatsMode() {
+  state.statsPctMode = !state.statsPctMode;
+  saveState();
+  updateStatScores();
+  // Re-render stats tab if currently open
+  const statsPage = document.getElementById('page-stats');
+  if (statsPage && statsPage.classList.contains('active')) {
+    const activeRange = document.querySelector('.range-btn.active');
+    renderGraph(activeRange?.dataset?.range || 'today');
+  }
+}
+
+function updateLevel() {
+  const xp = state.totalXP;
+  const isLegendary = xp >= 5000;
+  let level = LEVELS[LEVELS.length - 1];
+  for (const l of LEVELS) {
+    if (xp < l.max) { level = l; break; }
+  }
+  const progress = isLegendary ? 100 : ((xp - level.min) / (level.max - level.min)) * 100;
+  document.getElementById('level-name').textContent = level.name;
+  document.getElementById('xp-display').textContent = xp + ' xp';
+  document.getElementById('level-bar').style.width = Math.min(progress, 100) + '%';
+  document.getElementById('level-next-xp').textContent = isLegendary ? 'Max rank' : (level.max - xp) + ' to next';
+}
+
+function updateStreaks() {
+  document.getElementById('current-streak').textContent = state.streak;
+  document.getElementById('best-streak').textContent = state.bestStreak;
+}
+
+function updateUI() {
+  applyDayTheme();
+  updateStreaks();
+  updateLevel();
+  updateHomeProgress();
+  updateQuestProgress();
+  const brocEl = document.getElementById('broccoli-count');
+  if (brocEl) brocEl.textContent = state.broccoli || 0;
+}
+
+// ── STATS ──
+let statsCurrentTab = 'cats';
+let statsCurrentPeriod = 'today';
+
+function onStatsPeriodChange(period) {
+  statsCurrentPeriod = period;
+  renderStats();
+}
+
+function switchStatsTab(tab) {
+  statsCurrentTab = tab;
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  document.querySelectorAll('.stats-tab').forEach(t => {
+    t.classList.remove('active');
+    t.style.color = '';
+    t.style.background = '';
+  });
+  const activeTab = document.getElementById('stats-tab-' + tab);
+  activeTab.classList.add('active');
+  activeTab.style.color = getContrastColor(accent);
+  const labels = { cats: 'Categories', wake: 'Wake Time', broc: '🥦 Broccoli' };
+  renderStats();
+}
+
+function renderGraph(range) {
+  // Called from navigateTo — reset to default view
+  statsCurrentPeriod = 'today';
+  statsCurrentTab = 'cats';
+  document.getElementById('stats-period-select').value = 'today';
+  document.querySelectorAll('.stats-tab').forEach(t => { t.classList.remove('active'); t.style.color = ''; t.style.background = ''; });
+  document.getElementById('stats-tab-cats').classList.add('active');
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  document.getElementById('stats-tab-cats').style.color = getContrastColor(accent);
+  renderStats();
+}
+
+function getStatsData(period) {
+  // Returns { data: [...history], isToday: bool, isSingle: bool }
+  if (period === 'today') {
+    return { isToday: true, isSingle: true, data: [] };
+  } else if (period === 'yesterday') {
+    const d = state.history[state.history.length - 1] || null;
+    return { isToday: false, isSingle: true, data: d ? [d] : [] };
+  } else if (period === 'week') {
+    return { isToday: false, isSingle: false, data: state.history.slice(-7) };  } else if (period === 'month') {
+    return { isToday: false, isSingle: false, data: state.history.slice(-30) };
+  } else if (period === 'alltime') {
+    return { isToday: false, isSingle: false, data: state.history };
+  }
+  return { isToday: false, isSingle: false, data: [] };
+}
+
+function renderStats() {
+  const { isToday, isSingle, data } = getStatsData(statsCurrentPeriod);
+  const periodLabels = { today: 'Today', yesterday: 'Yesterday', week: 'Last Week', month: 'Last 30 Days', alltime: 'All Time' };
+  const tabLabels = { cats: 'Categories', wake: 'Wake Time', broc: 'Broccoli' };
+  document.getElementById('stats-graph-title').textContent = `${periodLabels[statsCurrentPeriod]} — ${tabLabels[statsCurrentTab]}`;
+
+  if (statsCurrentTab === 'cats') renderCatsView(isToday, isSingle, data);
+  else if (statsCurrentTab === 'wake') renderWakeView(isToday, isSingle, data);
+  else if (statsCurrentTab === 'broc') renderBrocView(isToday, isSingle, data);
+}
+
+// ── CATEGORIES VIEW ──
+function dayLabel(dateStr, compact) {
+  const full = new Date(dateStr).toLocaleDateString('en',{weekday:'short'}).slice(0,3);
+  return compact ? full.slice(0,1) : full;
+}
+
+function barWidth(dataLength) {
+  // Measure available width of the graph container
+  const container = document.getElementById('stats-graph-area');
+  const yAxisWidth = 50; // approximate y-axis width
+  const available = (container ? container.offsetWidth : 280) - yAxisWidth;
+  const gap = 6;
+  // Would full-size (32px) bars fit?
+  const fullWidth = dataLength * 32 + (dataLength - 1) * gap;
+  if (fullWidth <= available) return { width: '32px', compact: false };
+  // Try compact (20px)
+  const compactWidth = dataLength * 20 + (dataLength - 1) * gap;
+  if (compactWidth <= available) return { width: '20px', compact: true };
+  // Force fit — divide available space equally
+  const fitted = Math.floor((available - (dataLength - 1) * gap) / dataLength);
+  return { width: Math.max(fitted, 10) + 'px', compact: true };
+}
+
+function renderCatsView(isToday, isSingle, data) {
+  const cats = ['physical','mental','emotional','social','nutritional'];
+  const catNames = ['Physical','Mental','Emotional','Social','Nutritional'];
+  const shortNames = ['Phys','Ment','Emo','Soci','Nutri'];
+  const colors = getCatColors();
+  const area = document.getElementById('stats-graph-area');
+  const cardsEl = document.getElementById('stats-cards');
+  area.innerHTML = '';
+  cardsEl.innerHTML = '';
+  document.getElementById('stats-line-overlay').innerHTML = '';
+
+  let scores = {};
+  cats.forEach(c => scores[c] = { earned: 0, possible: 0 });
+
+  if (isToday) {
+    const statuses = { ...state.taskStatus.morning, ...state.taskStatus.day, ...state.taskStatus.night };
+    const allTasks = [...state.tasks.morning, ...state.tasks.day, ...state.tasks.night];
+    cats.forEach(cat => {
+      const relevant = allTasks.filter(t => t.category === cat && statuses[t.id] !== 'skip');
+      scores[cat] = { earned: relevant.filter(t => statuses[t.id] === 'complete').length, possible: relevant.length };
+    });
+    // Bar chart — today's live category breakdown
+    cats.forEach((cat, i) => {
+      const pct = scores[cat].possible ? (scores[cat].earned / scores[cat].possible) * 100 : 0;
+      const group = document.createElement('div');
+      group.className = 'bar-group';
+      group.innerHTML = `<div class="bar" style="height:${Math.max(pct,4)}%;background:${colors[i]};opacity:${0.4+(pct/100)*0.6}"></div><div class="bar-label">${shortNames[i]}</div>`;
+      area.appendChild(group);
+    });
+  } else if (isSingle) {
+    if (data.length === 0) { area.innerHTML = noDataMsg(); return; }
+    scores = data[0].scores || scores;
+    cats.forEach((cat, i) => {
+      const pct = scores[cat]?.possible ? (scores[cat].earned / scores[cat].possible) * 100 : 0;
+      const group = document.createElement('div');
+      group.className = 'bar-group';
+      group.innerHTML = `<div class="bar" style="height:${Math.max(pct,4)}%;background:${colors[i]};opacity:${0.4+(pct/100)*0.6}"></div><div class="bar-label">${shortNames[i]}</div>`;
+      area.appendChild(group);
+    });
+  } else {
+    if (data.length === 0) { area.innerHTML = noDataMsg(); return; }
+    // Multi-day: overall completion % per day with line overlay
+    const pcts = data.map(day => {
+      const te = cats.reduce((s,c) => s + (day.scores[c]?.earned||0), 0);
+      const tp = cats.reduce((s,c) => s + (day.scores[c]?.possible||0), 0);
+      return tp ? (te/tp)*100 : 0;
+    });
+
+    // Y-axis % ticks
+    const yTicks = ['100%', '75%', '50%', '25%'];
+    area.className = 'graph-area-with-axis';
+    area.innerHTML = `
+      <div class="y-axis">
+        ${yTicks.map(t => `<div class="y-axis-label">${t}</div>`).join('')}
+      </div>
+      <div class="graph-bars" id="cats-bars"></div>
+    `;
+    const barsEl = area.querySelector('#cats-bars');
+    const { width: bw, compact: bc } = barWidth(data.length);
+
+    data.forEach((day, i) => {
+      const isAlt = i % 2 === 1;
+      const group = document.createElement('div');
+      group.className = 'bar-group';
+      group.style.cssText = `position:relative;width:${bw};min-width:${bw}`;
+      group.innerHTML = `
+        <div class="bar" style="height:${Math.max(pcts[i],3)}%;background:var(--accent-1);opacity:${isAlt ? '0.45' : '0.75'};border-radius:4px 4px 0 0"></div>
+        <div class="bar-label">${dayLabel(day.date, bc)}</div>
+      `;
+      barsEl.appendChild(group);
+    });
+    drawLineOverlay(pcts, barsEl);
+    // Per-cat average cards
+    cats.forEach((cat, i) => {
+      const te = data.reduce((s,d) => s+(d.scores[cat]?.earned||0),0);
+      const tp = data.reduce((s,d) => s+(d.scores[cat]?.possible||0),0);
+      const pct = tp ? Math.round((te/tp)*100) : 0;
+      cardsEl.appendChild(makeCard(catNames[i], `${pct}<span style="font-size:11px;color:var(--text-muted)">%</span>`, colors[i], pct));
+    });
+    const avgXP = Math.round(data.reduce((s,d)=>s+(d.xp||0),0)/data.length);
+    cardsEl.appendChild(makeCard('Avg XP/Day', `${avgXP}<span style="font-size:11px;color:var(--text-muted)"> xp</span>`, 'var(--accent-2)', Math.min((avgXP/31)*100,100)));
+    return;
+  }
+
+  // Single-day score cards
+  const pctMode = state.statsPctMode;
+  cats.forEach((cat, i) => {
+    const e = scores[cat]?.earned||0, p = scores[cat]?.possible||0;
+    const pct = p ? Math.round((e/p)*100) : 0;
+    const val = pctMode
+      ? `${pct}<span style="font-size:11px;color:var(--text-muted)">%</span>`
+      : `${e}<span style="font-size:11px;color:var(--text-muted)">/${p}</span>`;
+    cardsEl.appendChild(makeCard(catNames[i], val, colors[i], pct, null, { earned: e, possible: p, pct }));
+  });
+  const wakeTime = isToday ? state.wakeTime : (data[0]?.wakeTime || null);
+  cardsEl.appendChild(makeCard('Wake Time', wakeTime ? to12Hour(wakeTime) : '—', 'var(--accent-2)', 100, 0.3));
+}
+
+// ── WAKE TIME VIEW ──
+function renderWakeView(isToday, isSingle, data) {
+  const area = document.getElementById('stats-graph-area');
+  const cardsEl = document.getElementById('stats-cards');
+  area.innerHTML = '';
+  cardsEl.innerHTML = '';
+  document.getElementById('stats-line-overlay').innerHTML = '';
+
+  if (isToday) {
+    // Single value — just show today's wake time big
+    area.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;flex:1;flex-direction:column;gap:8px;">
+      <div style="font-family:'Cinzel',serif;font-size:48px;color:var(--accent-2);">${state.wakeTime ? to12Hour(state.wakeTime) : '—'}</div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:2px;">TODAY'S WAKE TIME</div>
+    </div>`;
+    const threshold = state.wakeGoal || '07:00';
+    const hit = state.wakeTime && state.wakeTime <= threshold;
+    cardsEl.appendChild(makeCard('Goal', '11:00 AM', 'var(--accent-1)', 100));
+    cardsEl.appendChild(makeCard('Status', hit ? '✓ Hit' : state.wakeTime ? '✗ Missed' : '—', hit ? '#4CAF50' : '#ff6b6b', 100));
+    return;
+  }
+
+  if (isSingle) {
+    const w = data[0]?.wakeTime || null;
+    area.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;flex:1;flex-direction:column;gap:8px;">
+      <div style="font-family:'Cinzel',serif;font-size:48px;color:var(--accent-2);">${w ? to12Hour(w) : '—'}</div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:2px;">YESTERDAY'S WAKE TIME</div>
+    </div>`;
+    return;
+  }
+
+  if (data.length === 0) { area.innerHTML = noDataMsg(); return; }
+
+  // Multi-day: wake time bars
+  const wakeMins = data.map(d => {
+    if (!d.wakeTime) return null;
+    const [h,m] = d.wakeTime.split(':').map(Number);
+    return h*60+m;
+  });
+  const validMins = wakeMins.filter(m => m !== null);
+  if (validMins.length === 0) { area.innerHTML = noDataMsg(); return; }
+
+  const minTime = Math.min(...validMins);
+  const maxTime = Math.max(...validMins);
+  const rangeMins = maxTime - minTime || 60;
+
+  // Build Y-axis labels (4 ticks from min to max)
+  const yTicks = [0,1,2,3].map(i => {
+    const mins = Math.round(minTime + (rangeMins / 3) * (3 - i));
+    const h = Math.floor(mins/60), m = mins%60;
+    return to12Hour(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+  });
+
+  area.className = 'graph-area-with-axis';
+  area.innerHTML = `
+    <div class="y-axis">
+      ${yTicks.map(t => `<div class="y-axis-label">${t}</div>`).join('')}
+    </div>
+    <div class="graph-bars" id="wake-bars"></div>
+  `;
+
+  const barsEl = area.querySelector('#wake-bars');
+  const { width: bw, compact: bc } = barWidth(data.length);
+  data.forEach((day, i) => {
+    const mins = wakeMins[i];
+    const pct = mins !== null ? Math.max(5, 100 - ((mins - minTime) / rangeMins) * 90) : 4;
+    const displayTime = mins !== null ? to12Hour(day.wakeTime).replace(' ','').toLowerCase() : '—';
+    const isAlt = i % 2 === 1;
+    const group = document.createElement('div');
+    group.className = 'bar-group';
+    group.style.cssText = `position:relative;width:${bw};min-width:${bw}`;
+    group.innerHTML = `
+      <div class="bar-value" style="${bc?'display:none':''}">${displayTime}</div>
+      <div class="bar" style="height:${pct}%;background:var(--accent-2);opacity:${isAlt ? '0.45' : '0.8'};border-radius:4px 4px 0 0"></div>
+      <div class="bar-label">${dayLabel(day.date, bc)}</div>
+    `;
+    barsEl.appendChild(group);
+  });
+
+  // Average wake time card
+  const avgMins = Math.round(validMins.reduce((a,b)=>a+b,0)/validMins.length);
+  const avgH = Math.floor(avgMins/60), avgM = avgMins%60;
+  const avgStr = `${String(avgH).padStart(2,'0')}:${String(avgM).padStart(2,'0')}`;
+  const earliestMins = Math.min(...validMins);
+  const earliestDay = data.find(d => { if (!d.wakeTime) return false; const [h,m] = d.wakeTime.split(':').map(Number); return h*60+m === earliestMins; });
+  cardsEl.appendChild(makeCard('Average', to12Hour(avgStr), 'var(--accent-2)', 100));
+  cardsEl.appendChild(makeCard('Earliest', earliestDay ? to12Hour(earliestDay.wakeTime) : '—', '#4CAF50', 100));
+}
+
+// ── BROCCOLI VIEW ──
+function renderBrocView(isToday, isSingle, data) {
+  const area = document.getElementById('stats-graph-area');
+  const cardsEl = document.getElementById('stats-cards');
+  area.innerHTML = '';
+  cardsEl.innerHTML = '';
+  document.getElementById('stats-line-overlay').innerHTML = '';
+
+  if (isToday) {
+    area.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;flex:1;flex-direction:column;gap:8px;">
+      <div style="font-size:56px;">🥦</div>
+      <div style="font-family:'Cinzel',serif;font-size:56px;color:var(--text-primary);line-height:1;">${state.broccoli||0}</div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:2px;">TODAY</div>
+    </div>`;
+    return;
+  }
+
+  if (isSingle) {
+    const count = data[0]?.broccoli || 0;
+    area.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;flex:1;flex-direction:column;gap:8px;">
+      <div style="font-size:56px;">🥦</div>
+      <div style="font-family:'Cinzel',serif;font-size:56px;color:var(--text-primary);line-height:1;">${count}</div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:2px;">YESTERDAY</div>
+    </div>`;
+    return;
+  }
+
+  if (data.length === 0) { area.innerHTML = noDataMsg(); return; }
+
+  const counts = data.map(d => d.broccoli || 0);
+  const maxCount = Math.max(...counts, 1);
+
+  // Y-axis ticks
+  const yTicks = [maxCount, Math.round(maxCount*0.66), Math.round(maxCount*0.33), 0];
+
+  area.className = 'graph-area-with-axis';
+  area.innerHTML = `
+    <div class="y-axis">
+      ${yTicks.map(t => `<div class="y-axis-label">${t}</div>`).join('')}
+    </div>
+    <div class="graph-bars" id="broc-bars"></div>
+  `;
+
+  const barsEl = area.querySelector('#broc-bars');
+  const { width: bw, compact: bc } = barWidth(data.length);
+  data.forEach((day, i) => {
+    const pct = (counts[i] / maxCount) * 100;
+    const isAlt = i % 2 === 1;
+    const group = document.createElement('div');
+    group.className = 'bar-group';
+    group.style.cssText = `width:${bw};min-width:${bw}`;
+    group.innerHTML = `
+      <div class="bar-value" style="${bc?'display:none':''}">${counts[i] > 0 ? counts[i] : ''}</div>
+      <div class="bar" style="height:${Math.max(pct,3)}%;background:#4CAF50;opacity:${isAlt ? '0.45' : '0.8'};border-radius:4px 4px 0 0"></div>
+      <div class="bar-label">${dayLabel(day.date, bc)}</div>
+    `;
+    barsEl.appendChild(group);
+  });
+  drawLineOverlay(counts.map(c => (c/maxCount)*100), barsEl);
+
+  const total = counts.reduce((a,b)=>a+b,0);
+  const avg = (total/data.length).toFixed(1);
+  const best = Math.max(...counts);
+  cardsEl.appendChild(makeCard('Total 🥦', String(total), '#4CAF50', 100));
+  cardsEl.appendChild(makeCard('Daily Avg', avg, '#4CAF50', 100));
+  cardsEl.appendChild(makeCard('Best Day', String(best), '#4CAF50', 100));
+}
+
+// ── HELPERS ──
+function noDataMsg() {
+  return '<div style="color:var(--text-muted);font-size:11px;letter-spacing:1px;text-align:center;width:100%;align-self:center;padding:40px 0">NO DATA YET</div>';
+}
+
+function makeCard(name, valHtml, color, barPct, barOpacity, rawData) {
+  const card = document.createElement('div');
+  card.className = 'stat-score-card';
+  if (rawData) {
+    card.style.cursor = 'pointer';
+    card.dataset.earned = rawData.earned;
+    card.dataset.possible = rawData.possible;
+    card.dataset.pct = rawData.pct;
+    card.addEventListener('click', () => toggleStatsMode());
+  }
+  card.innerHTML = `
+    <div class="stat-score-card-row">
+      <div class="stat-score-card-name">${name}</div>
+      <div class="stat-score-card-val" style="color:${color}">${valHtml}</div>
+    </div>
+    <div class="stat-score-card-bar"><div class="stat-score-card-fill" style="width:${barPct||0}%;background:${color};opacity:${barOpacity||1}"></div></div>
+  `;
+  return card;
+}
+
+function drawLineOverlay(pcts, area) {
+  requestAnimationFrame(() => {
+    const svg = document.getElementById('stats-line-overlay');
+    const areaRect = area.getBoundingClientRect();
+    const groups = area.querySelectorAll('.bar-group');
+    if (groups.length < 2) return;
+    const avgPcts = pcts.map((_,i) => {
+      const w = pcts.slice(Math.max(0,i-1), i+2);
+      return w.reduce((a,b)=>a+b,0)/w.length;
+    });
+    const points = Array.from(groups).map((g,i) => {
+      const rect = g.getBoundingClientRect();
+      const x = rect.left - areaRect.left + rect.width/2;
+      const graphHeight = areaRect.height - 20;
+      const y = graphHeight - (avgPcts[i]/100)*graphHeight;
+      return { x, y };
+    });
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const cp1x = (points[i-1].x + points[i].x) / 2;
+      d += ` C ${cp1x} ${points[i-1].y}, ${cp1x} ${points[i].y}, ${points[i].x} ${points[i].y}`;
+    }
+    const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-2').trim();
+    svg.innerHTML = `
+      <path d="${d}" fill="none" stroke="${accent}" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+      ${points.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${accent}" opacity="0.9"/>`).join('')}
+    `;
+  });
+}
+
+function setTimeFilter() {} // legacy stub — no longer used
+
+function getCatColors() {
+  const DAY_STAT_COLORS = {
+    monday:    ['#EB4C4C','#FF7070','#FFA6A6','#FFEDC7','#ffb347'],
+    tuesday:   ['#F26076','#FF9760','#FFD150','#458B73','#2d6b55'],
+    wednesday: ['#6CA651','#BBCB2E','#839705','#6B7445','#d4e04a'],
+    thursday:  ['#5A9CB5','#FACE68','#FAAC68','#FA6868','#c87a40'],
+    friday:    ['#9667e0','#b48af0','#d4bbfc','#ebd9fc','#c4a0f8'],
+    saturday:  ['#4A5568','#718096','#A0AEC0','#E2E8F0','#CBD5E0'],
+    sunday:    ['#CFFFE2','#A2D5C6','#F6F6F6','#7ecba0','#d0d0d0']
+  };
+  const dayKeys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const activeTheme = state.permanentTheme || dayKeys[new Date().getDay()];
+  return DAY_STAT_COLORS[activeTheme] || DAY_STAT_COLORS.monday;
+}
+
+// ── CONTRAST COLOUR UTILITY ──
+function getContrastColor(hex) {
+  // Strip # if present
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+  const r = parseInt(hex.substring(0,2), 16) / 255;
+  const g = parseInt(hex.substring(2,4), 16) / 255;
+  const b = parseInt(hex.substring(4,6), 16) / 255;
+  // Linearise
+  const toLinear = c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  const luminance = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+  return luminance > 0.179 ? '#000000' : '#ffffff';
+}
+function adjustBroccoli(delta) {
+  state.broccoli = Math.max(0, (state.broccoli || 0) + delta);
+  document.getElementById('broccoli-count').textContent = state.broccoli;
+  saveState();
+}
+
+function updateQuestProgress() {
+  const streakGoals = [3,7,14,30];
+  const xpGoals = [50,150,400,900,2000];
+  const xpGoalNames = ['First Steps','Building Momentum','Grinding','Dedicated','Legendary'];
+
+  // ── Streak quest ──
+  const completedStreakGoals = streakGoals.filter(g => state.streak >= g);
+  const currentStreakGoal = streakGoals.find(g => state.streak < g);
+
+  if (currentStreakGoal) {
+    const prevGoal = streakGoals[streakGoals.indexOf(currentStreakGoal) - 1] || 0;
+    document.getElementById('streak-q-progress').textContent = state.streak + '/' + currentStreakGoal;
+    document.getElementById('streak-q-bar').style.width = Math.min((state.streak / currentStreakGoal) * 100, 100) + '%';
+    document.getElementById('streak-q-name').textContent = 'Streak — ' + currentStreakGoal + ' Days';
+    document.getElementById('streak-q-sub').textContent = 'Complete your full routine ' + currentStreakGoal + ' days in a row';
+    document.getElementById('streak-quest-card').style.display = 'flex';
+  } else {
+    // All 4 streak tiers done, show 100 day standalone
+    document.getElementById('streak-q-progress').textContent = state.streak + '/100';
+    document.getElementById('streak-q-bar').style.width = Math.min((state.streak / 100) * 100, 100) + '%';
+    document.getElementById('streak-q-name').textContent = 'Century Streak';
+    document.getElementById('streak-q-sub').textContent = '100 days straight. Legendary territory.';
+    document.getElementById('streak-quest-card').style.display = 'flex';
+  }
+
+  // ── Morning Person quest ──
+  const morningGoals = [3,7,14,30];
+  const currentMorningGoal = morningGoals.find(g => (state.morningStreak || 0) < g);
+  if (currentMorningGoal) {
+    document.getElementById('morning-q-progress').textContent = (state.morningStreak || 0) + '/' + currentMorningGoal;
+    document.getElementById('morning-q-bar').style.width = Math.min(((state.morningStreak || 0) / currentMorningGoal) * 100, 100) + '%';
+    document.getElementById('morning-q-name').textContent = 'Morning Person — ' + currentMorningGoal + ' Days';
+    document.getElementById('morning-q-sub').textContent = 'Complete morning list before ' + to12Hour(state.morningDeadline || '11:00') + ', ' + currentMorningGoal + ' days running';
+    document.getElementById('morning-quest-card').style.display = 'flex';
+  } else {
+    document.getElementById('morning-quest-card').style.display = 'none';
+  }
+
+  // ── XP quest ──
+  const currentXpGoalIdx = xpGoals.findIndex(g => state.totalXP < g);
+  if (currentXpGoalIdx !== -1) {
+    const xpGoal = xpGoals[currentXpGoalIdx];
+    document.getElementById('xp-q-progress').textContent = state.totalXP + '/' + xpGoal;
+    document.getElementById('xp-q-bar').style.width = Math.min((state.totalXP / xpGoal) * 100, 100) + '%';
+    document.getElementById('xp-q-name').textContent = xpGoalNames[currentXpGoalIdx] + ' — ' + xpGoal + ' XP';
+    document.getElementById('xp-quest-card').style.display = 'flex';
+  } else {
+    document.getElementById('xp-quest-card').style.display = 'none';
+  }
+
+  // ── Trophies ──
+  renderTrophies();
+}
+
+function renderTrophies() {
+  const trophies = state.trophies || [];
+  const el = document.getElementById('trophy-list');
+  if (!el) return;
+
+  if (trophies.length === 0) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:11px;letter-spacing:1px">NO TROPHIES YET — START YOUR JOURNEY</div>';
+    return;
+  }
+
+  el.innerHTML = trophies.map(t => `
+    <div class="trophy-card">
+      <div class="trophy-icon">${t.icon}</div>
+      <div>
+        <div class="trophy-name">${t.name}</div>
+        <div class="trophy-date">${t.date}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function awardTrophy(icon, name) {
+  if (!state.trophies) state.trophies = [];
+  const already = state.trophies.find(t => t.name === name);
+  if (already) return;
+  state.trophies.push({ icon, name, date: new Date().toLocaleDateString('en', { day:'numeric', month:'short', year:'numeric' }) });
+  saveState();
+}
+
+// ── SETTINGS ──
+function setResetTime() {
+  showInputModal(
+    'Daily Reset Time',
+    'When should the app reset each day?',
+    'time',
+    state.resetTime || '02:00',
+    (val) => {
+      state.resetTime = val;
+      document.getElementById('reset-time-display').textContent = 'Currently ' + to12Hour(val);
+      saveState();
+    }
+  );
+}
+
+function setWakeGoal(val) {
+  state.wakeGoal = val;
+  const display = document.getElementById('wake-goal-display');
+  if (display) display.textContent = 'Target: ' + to12Hour(val);
+  saveState();
+}
+
+function setMorningDeadline(val) {
+  state.morningDeadline = val;
+  const display = document.getElementById('morning-deadline-display');
+  if (display) display.textContent = 'Complete morning list before ' + to12Hour(val);
+  saveState();
+}
+
+
+function showInputModal(title, subtitle, type, current, onConfirm) {
+  document.getElementById('confirm-modal-title').textContent = title;
+  document.getElementById('confirm-modal-body').innerHTML = `<div style="margin-bottom:12px;color:var(--text-secondary);font-size:12px;">${subtitle}</div>
+    <input id="modal-input" type="${type}" value="${current}"
+      style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text-primary);font-size:16px;width:100%;box-sizing:border-box;font-family:inherit;" />`;
+  const confirmBtn = document.getElementById('confirm-modal-btn');
+  confirmBtn.textContent = 'SAVE';
+  confirmBtn.onclick = () => {
+    const val = document.getElementById('modal-input').value;
+    if (val) onConfirm(val);
+    closeConfirmModal();
+  };
+  document.getElementById('confirm-modal').classList.add('visible');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'character-sheet-backup.json';
+  a.click();
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        state = { ...state, ...parsed };
+        state.taskEditMode = false;
+        saveState();
+        updateUI();
+        applyAllSettings();
+        renderTaskList();
+        alert('Data imported successfully!');
+      } catch { alert('Invalid file'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function applyAllSettings() {
+  // Wake up goal
+  const wakeDisplay = document.getElementById('wake-goal-display');
+  if (wakeDisplay) wakeDisplay.textContent = 'Target: ' + to12Hour(state.wakeGoal || '07:00');
+
+  // Morning deadline
+  const deadlineDisplay = document.getElementById('morning-deadline-display');
+  if (deadlineDisplay) deadlineDisplay.textContent = 'Complete morning list before ' + to12Hour(state.morningDeadline || '11:00');
+
+  // Reset time
+  const resetDisplay = document.getElementById('reset-time-display');
+  if (resetDisplay) resetDisplay.textContent = 'Currently ' + to12Hour(state.resetTime || '02:00');
+
+  // Tracker + broccoli
+  applyBroccoliVisibility();
+
+  // Theme rotation toggle
+  const rotToggle = document.getElementById('rotation-toggle');
+  const rotKnob = document.getElementById('rotation-knob');
+  const rotLabel = document.getElementById('rotation-label');
+  const isRotating = !state.permanentTheme;
+  if (rotToggle) rotToggle.style.background = isRotating ? '#4CAF50' : 'var(--bg-elevated)';
+  if (rotKnob) rotKnob.style.transform = isRotating ? 'translateX(18px)' : 'translateX(0)';
+  if (rotLabel) rotLabel.textContent = isRotating ? 'Each day uses its own colour palette' : 'Fixed theme selected';
+
+  // Theme swatches active state
+  document.querySelectorAll('.theme-swatch').forEach(s => {
+    s.classList.toggle('active', s.dataset.day === state.permanentTheme);
+  });
+
+  // Apply the actual theme colours
+  applyDayTheme();
+}
+
+// ── DAY COMPLETE ──
+const DAY_COMPLETE_PHRASES = [
+  "Quest complete. The hero rests.",
+  "Experience gained. Level loading.",
+  "Day cleared. Loot collected.",
+  "The grind is sacred. Well played.",
+  "Another day, another dungeon cleared.",
+  "Your stats have been updated, adventurer.",
+  "No days off. Except today. Which is done. So, good.",
+  "You didn't skip leg day. Probably.",
+  "Sigma grindset activated. Now go to sleep.",
+  "Rise and grind. You rose. You ground. Respect.",
+  "Your ancestors could never. Seriously, they were busy surviving.",
+  "That's what separates the lions from the lions who also do their skincare.",
+  "Coach would be proud. Coach doesn't exist. You are the coach.",
+  "Main character behaviour. Consistently."
+];
+
+function showDayComplete() {
+  haptic('day');
+  const phrase = DAY_COMPLETE_PHRASES[Math.floor(Math.random() * DAY_COMPLETE_PHRASES.length)];
+  state.dayComplete = true;
+  state.savedPhrase = phrase;
+  saveState();
+  navigateTo('tasks');
+  setTimeout(launchConfetti, 200);
+}
+
+function dismissDayComplete() {
+  navigateTo('home');
+}
+
+
+// ── DEBUG TOOLS ──
+function openDebugPage() {
+  const modal = document.getElementById('debug-modal');
+  modal.style.display = 'flex';
+
+  // If already unlocked this session OR jimmy mode is permanently on, skip gate
+  if (window._debugUnlocked || state.jimmyMode) {
+    document.getElementById('debug-password-gate').style.display = 'none';
+    document.getElementById('debug-content').style.display = 'flex';
+    refreshDebugFakeBtn();
+  } else {
+    document.getElementById('debug-password-gate').style.display = 'flex';
+    document.getElementById('debug-content').style.display = 'none';
+    document.getElementById('debug-password-input').value = '';
+    document.getElementById('debug-password-error').textContent = '';
+    setTimeout(() => document.getElementById('debug-password-input').focus(), 100);
+  }
+}
+
+function checkDebugPassword() {
+  const val = document.getElementById('debug-password-input').value.trim();
+  if (val.toLowerCase() === 'prince') {
+    window._debugUnlocked = true;
+    document.getElementById('debug-password-gate').style.display = 'none';
+    document.getElementById('debug-content').style.display = 'flex';
+    refreshDebugFakeBtn();
+  } else {
+    const input = document.getElementById('debug-password-input');
+    const err = document.getElementById('debug-password-error');
+    err.textContent = 'INCORRECT PASSWORD';
+    input.style.animation = 'shake 0.3s ease';
+    input.value = '';
+    setTimeout(() => input.style.animation = '', 400);
+  }
+}
+
+function refreshDebugFakeBtn() {
+  document.getElementById('debug-status').textContent = '';
+  const hasFake = state.history.some(h => h.fake);
+  const lbl = document.getElementById('debug-fake-btn-label');
+  const sub = document.getElementById('debug-fake-btn-sub');
+  const row = document.getElementById('debug-fake-btn-row');
+  if (hasFake) {
+    lbl.textContent = 'Remove Seeded Data';
+    lbl.style.color = '#ff4444';
+    sub.textContent = 'Removes all seeded data — real data untouched';
+    row.style.borderColor = '#ff4444';
+    row.onclick = debugRemoveFakeHistory;
+  } else {
+    lbl.textContent = 'Add 3 Months Seeded Data';
+    lbl.style.color = '';
+    sub.textContent = 'Seeds 90 days of random data for testing stats';
+    row.style.borderColor = '';
+    row.onclick = debugAddFakeHistory;
+  }
+}
+
+function closeDebugPage() {
+  document.getElementById('debug-modal').style.display = 'none';
+}
+
+function runDebugCommand() {
+  const input = document.getElementById('debug-console-input');
+  const output = document.getElementById('debug-console-output');
+  const cmd = input.value.trim().toLowerCase();
+  input.value = '';
+
+  if (cmd === 'jimmymode') {
+    state.jimmyMode = true;
+    saveState();
+    // Load Jimmy's personal defaults
+    state.tasks = JSON.parse(JSON.stringify(JIMMY_TASKS));
+    state.broccoliEnabled = true;
+    state.trackerEmoji = '🥦';
+    state.trackerName = 'Broccoli';
+    saveState();
+    updateUI();
+    applyBroccoliVisibility();
+    output.style.color = '#4CAF50';
+    output.textContent = '> jimmymode activated — persistent. welcome back 👑';
+    // Show subtle indicator in header
+    const header = document.querySelector('.app-title');
+    if (header) header.style.textShadow += ', 0 0 20px gold';
+  } else if (cmd === '') {
+    output.textContent = '';
+  } else {
+    output.style.color = '#ff4444';
+    output.textContent = '> unknown command: ' + cmd;
+  }
+}
+
+function debugStatus(msg) {
+  const el = document.getElementById('debug-status');
+  el.textContent = '✓ ' + msg;
+  setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+function debugPreviewOnboarding() {
+  state.onboardingDone = false;
+  saveState();
+  closeDebugPage();
+  onboardingStep = 0;
+  document.querySelectorAll('.onboarding-slide').forEach((s,i) => s.classList.toggle('active', i === 0));
+  document.querySelectorAll('.onboarding-dot').forEach((d,i) => d.classList.toggle('active', i === 0));
+  const btn = document.getElementById('onboarding-btn');
+  btn.style.display = 'block';
+  btn.textContent = 'Next →';
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  btn.style.color = getContrastColor(accent);
+  const overlay = document.getElementById('onboarding-overlay');
+  overlay.style.cssText = 'display:flex;opacity:1;animation:none;';
+}
+
+function debugAddFakeHistory() {
+  const cats = ['physical','mental','emotional','social','nutritional'];
+  const wakeTimes = ['05:30','05:45','06:00','06:15','06:30','06:45','07:00','07:15','07:30','07:45'];
+  const brocMax = 5;
+  let addedXP = 0;
+
+  for (let i = 90; i >= 1; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toDateString();
+    if (state.history.some(h => h.date === dateStr)) continue;
+
+    const scores = {};
+    cats.forEach(c => {
+      const possible = 6 + Math.floor(Math.random() * 3);
+      const earned = Math.floor(Math.random() * (possible + 1));
+      scores[c] = { earned, possible };
+    });
+    const totalEarned = cats.reduce((s,c) => s + scores[c].earned, 0);
+    const xp = totalEarned;
+    addedXP += xp;
+
+    state.history.push({
+      date: dateStr,
+      wakeTime: wakeTimes[Math.floor(Math.random() * wakeTimes.length)],
+      scores,
+      xp,
+      broccoli: Math.floor(Math.random() * brocMax),
+      fake: true  // tagged so we can remove it later
+    });
+  }
+
+  state.fakeXP = (state.fakeXP || 0) + addedXP;
+  state.history.sort((a,b) => new Date(a.date) - new Date(b.date));
+  state.totalXP += addedXP;
+  saveState();
+  updateUI();
+  debugStatus('90 days of fake history added');
+  document.getElementById('debug-fake-btn-label').textContent = 'Remove Fake Data';
+  document.getElementById('debug-fake-btn-sub').textContent = 'Removes all seeded data — real data untouched';
+  document.getElementById('debug-fake-btn-row').onclick = debugRemoveFakeHistory;
+  document.getElementById('debug-fake-btn-row').style.borderColor = '#ff4444';
+  document.getElementById('debug-fake-btn-label').style.color = '#ff4444';
+}
+
+function debugRemoveFakeHistory() {
+  const fakeXP = state.fakeXP || 0;
+  state.history = state.history.filter(h => !h.fake);
+  state.totalXP = Math.max(0, state.totalXP - fakeXP);
+  state.fakeXP = 0;
+  saveState();
+  updateUI();
+  debugStatus('Fake data removed — real data intact');
+  document.getElementById('debug-fake-btn-label').textContent = 'Add 3 Months Seeded Data';
+  document.getElementById('debug-fake-btn-sub').textContent = 'Seeds 90 days of random data for testing stats';
+  document.getElementById('debug-fake-btn-row').onclick = debugAddFakeHistory;
+  document.getElementById('debug-fake-btn-row').style.borderColor = '';
+  document.getElementById('debug-fake-btn-label').style.color = '';
+}
+
+function debugClearHistory() {
+  showConfirm(
+    '⚠ Delete Seeded Data',
+    'This will remove all seeded history and XP. Your real tasks, settings, and logged data will not be affected.',
+    'Delete Seeded Data',
+    () => {
+      state.history = state.history.filter(h => !h.fake);
+      const fakeXP = state.fakeXP || 0;
+      state.totalXP = Math.max(0, state.totalXP - fakeXP);
+      state.fakeXP = 0;
+      saveState();
+      updateUI();
+      debugStatus('Seeded data removed');
+      refreshDebugFakeBtn();
+    }
+  );
+}
+
+// ── RANKS MODAL ──
+function openRanksModal() {
+  const xp = state.totalXP;
+  let currentIndex = LEVELS.length - 1;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (xp < LEVELS[i].max) { currentIndex = i; break; }
+  }
+
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  const list = document.getElementById('ranks-list');
+  list.innerHTML = '';
+
+  // Group tiers for visual separation
+  const tiers = ['Dormant', 'Awakening', 'Rising', 'Forged', 'Ascendant', 'Legendary'];
+  let lastTier = '';
+
+  LEVELS.forEach((level, i) => {
+    const tier = level.name.split(' ')[0];
+    if (tier !== lastTier) {
+      const header = document.createElement('div');
+      header.style.cssText = 'font-size:9px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-top:' + (lastTier ? '12px' : '0') + ';margin-bottom:2px;';
+      header.textContent = tier;
+      list.appendChild(header);
+      lastTier = tier;
+    }
+
+    const isCurrent = i === currentIndex;
+    const isUnlocked = xp >= level.min;
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:var(--radius-sm);border:1px solid ${isCurrent ? accent : 'var(--border)'};background:${isCurrent ? 'var(--bg-elevated)' : 'var(--bg-card)'};`;
+    row.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:14px;opacity:${isUnlocked ? '1' : '0.3'}">${isUnlocked ? '⚔️' : '🔒'}</div>
+        <div style="font-family:'Cinzel',serif;font-size:13px;color:${isCurrent ? accent : isUnlocked ? 'var(--text-primary)' : 'var(--text-muted)'};letter-spacing:0.5px;">${level.name}</div>
+        ${isCurrent ? `<div style="font-size:9px;background:${accent};color:${getContrastColor(accent)};padding:2px 6px;border-radius:4px;letter-spacing:1px;">YOU</div>` : ''}
+      </div>
+      <div style="font-size:11px;color:${isUnlocked ? 'var(--text-secondary)' : 'var(--text-muted)'};letter-spacing:0.5px;">${level.name === 'Legendary' ? '5000+ xp' : level.min + ' xp'}</div>
+    `;
+    list.appendChild(row);
+  });
+
+  // Scroll current rank into view after render
+  document.getElementById('ranks-modal').style.display = 'flex';
+  setTimeout(() => {
+    const rows = list.querySelectorAll('[style*="border:1px solid ' + accent + '"]');
+    if (rows.length) rows[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
+
+function closeRanksModal() {
+  document.getElementById('ranks-modal').style.display = 'none';
+}
+
+
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  const accent2 = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-2').trim();
+  const colors = [accent, accent2, '#ffffff', '#ffd700', '#ff6b6b'];
+
+  const pieces = Array.from({ length: 80 }, () => ({
+    x: Math.random() * canvas.width,
+    y: -10 - Math.random() * 100,
+    r: 4 + Math.random() * 5,
+    d: 2 + Math.random() * 3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    tilt: Math.random() * 10 - 5,
+    tiltAngle: 0,
+    tiltSpeed: 0.05 + Math.random() * 0.1,
+    shape: Math.random() > 0.5 ? 'circle' : 'rect',
+  }));
+
+  let frame = 0;
+  const maxFrames = 160;
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      ctx.beginPath();
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0, 1 - frame / maxFrames);
+      if (p.shape === 'circle') {
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      } else {
+        ctx.rect(p.x, p.y, p.r * 2, p.r);
+      }
+      ctx.fill();
+      p.y += p.d;
+      p.x += Math.sin(p.tiltAngle) * 1.5;
+      p.tiltAngle += p.tiltSpeed;
+    });
+    frame++;
+    if (frame < maxFrames) requestAnimationFrame(draw);
+    else { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.globalAlpha = 1; }
+  }
+  draw();
+}
+
+// ── HAPTICS ──
+function haptic(type) {
+  if (!navigator.vibrate) return;
+  if (type === 'tick')     navigator.vibrate(12);
+  if (type === 'complete') navigator.vibrate([40, 60, 40]);
+  if (type === 'day')      navigator.vibrate([60, 80, 60, 80, 120]);
+  if (type === 'error')    navigator.vibrate([30, 50, 30]);
+}
+
+// ── ONBOARDING ──
+let onboardingStep = 0;
+const ONBOARDING_TOTAL = 3;
+// Slide 1 (0-indexed) has choices but Next button still shows — choices advance automatically
+const CHOICE_SLIDES = [];
+
+function onboardingNext() {
+  if (onboardingStep === 2) { finishOnboarding(); return; }
+  onboardingStep++;
+  updateOnboardingSlide();
+}
+
+function onboardToggleTracker() {
+  state.broccoliEnabled = !state.broccoliEnabled;
+  const toggle = document.getElementById('onboard-tracker-toggle');
+  const knob = document.getElementById('onboard-tracker-knob');
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  if (toggle) toggle.style.background = state.broccoliEnabled ? accent : 'var(--bg-card)';
+  if (knob) {
+    knob.style.transform = state.broccoliEnabled ? 'translateX(18px)' : 'translateX(0)';
+    knob.style.background = state.broccoliEnabled ? getContrastColor(accent) : 'var(--text-muted)';
+  }
+}
+
+function onboardingSetTasks(mode) {
+  if (mode === 'fresh') {
+    state.tasks = { morning: [], day: [], night: [] };
+    state.taskStatus = { morning: {}, day: {}, night: {} };
+  } else {
+    state.tasks = JSON.parse(JSON.stringify(JIMMY_TASKS));
+  }
+  onboardingStep = 2;
+  updateOnboardingSlide();
+}
+
+function finishOnboarding() {
+  state.onboardingDone = true;
+  saveState();
+  applyBroccoliVisibility();
+  const el = document.getElementById('onboarding-overlay');
+  el.style.animation = 'fadeOut 0.4s ease forwards';
+  setTimeout(() => { el.style.display = 'none'; }, 400);
+}
+
+function updateOnboardingSlide() {
+  document.querySelectorAll('.onboarding-slide').forEach((s,i) => {
+    s.classList.toggle('active', i === onboardingStep);
+  });
+  document.querySelectorAll('.onboarding-dot').forEach((d,i) => {
+    d.classList.toggle('active', i === onboardingStep);
+  });
+  // Hide Next button on choice slides
+  const btn = document.getElementById('onboarding-btn');
+  const isChoice = CHOICE_SLIDES.includes(onboardingStep);
+  btn.style.display = isChoice ? 'none' : 'block';
+  if (!isChoice) {
+    btn.textContent = onboardingStep === 2 ? "Let's Go ✓" : 'Next →';
+    const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+    btn.style.color = getContrastColor(accent);
+  }
+  // Populate install slide when we reach it
+  if (onboardingStep === 2) {
+    const ua = navigator.userAgent;
+    const isIOS = /iphone|ipad|ipod/i.test(ua);
+    const isAndroid = /android/i.test(ua);
+    const isSafari = isIOS && !/CriOS|FxiOS|OPiOS/i.test(ua);
+
+    let steps = [];
+    if (isIOS && !isSafari) {
+      steps = [
+        { icon: '1️⃣', text: 'Open this page in <strong style="color:var(--text-primary)">Safari</strong> (not Firefox or Chrome)' },
+        { icon: '2️⃣', text: 'Tap the <strong style="color:var(--text-primary)">Share ⎋</strong> button at the bottom' },
+        { icon: '3️⃣', text: 'Tap <strong style="color:var(--text-primary)">Add to Home Screen</strong>' },
+      ];
+    } else if (isIOS) {
+      steps = [
+        { icon: '1️⃣', text: 'Tap the <strong style="color:var(--text-primary)">Share ⎋</strong> button at the bottom of Safari' },
+        { icon: '2️⃣', text: 'Tap <strong style="color:var(--text-primary)">Add to Home Screen</strong>' },
+        { icon: '3️⃣', text: 'Tap <strong style="color:var(--text-primary)">Add</strong> to confirm' },
+      ];
+    } else {
+      steps = [
+        { icon: '1️⃣', text: 'Tap the <strong style="color:var(--text-primary)">⋮ menu</strong> in your browser' },
+        { icon: '2️⃣', text: 'Tap <strong style="color:var(--text-primary)">Add to Home Screen</strong> or <strong style="color:var(--text-primary)">Install App</strong>' },
+        { icon: '3️⃣', text: 'Tap <strong style="color:var(--text-primary)">Add</strong> to confirm' },
+      ];
+    }
+
+    const container = document.getElementById('install-steps');
+    container.innerHTML = steps.map(s => `
+      <div style="display:flex;align-items:center;gap:12px;background:var(--bg-elevated);border-radius:var(--radius-sm);padding:12px;">
+        <div style="font-size:22px;flex-shrink:0;">${s.icon}</div>
+        <div style="font-size:13px;color:var(--text-secondary);letter-spacing:0.3px;">${s.text}</div>
+      </div>
+    `).join('');
+  }
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  const contrast = getContrastColor(accent);
+  document.querySelectorAll('.onboarding-choice:not(.onboarding-choice-muted)').forEach(b => b.style.color = contrast);
+}
+
+
+
+function toggleBroccoli() {
+  state.broccoliEnabled = !state.broccoliEnabled;
+  saveState();
+  applyBroccoliVisibility();
+}
+
+function getTrackerEmoji() { return state.trackerEmoji || '🥦'; }
+function getTrackerName() { return state.trackerName || 'Broccoli'; }
+
+function applyBroccoliVisibility() {
+  const enabled = state.broccoliEnabled !== false;
+  const emoji = getTrackerEmoji();
+  const name = getTrackerName();
+
+  const homePanel = document.getElementById('home-broccoli-panel');
+  if (homePanel) homePanel.style.display = enabled ? 'flex' : 'none';
+
+  const homeEmoji = document.getElementById('home-tracker-emoji');
+  if (homeEmoji) homeEmoji.textContent = emoji;
+  const homeName = document.getElementById('home-tracker-name');
+  if (homeName) homeName.textContent = name;
+
+  const brocTab = document.getElementById('stats-tab-broc');
+  if (brocTab) brocTab.style.display = enabled ? '' : 'none';
+  if (brocTab) brocTab.textContent = emoji;
+
+  const dcBroc = document.getElementById('dc-broc')?.closest('.dc-pill');
+  if (dcBroc) dcBroc.style.display = enabled ? '' : 'none';
+
+  const toggle = document.getElementById('broccoli-setting-toggle');
+  const knob = document.getElementById('broccoli-setting-knob');
+  const sub = document.getElementById('broccoli-toggle-sub');
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  if (toggle) toggle.style.background = enabled ? accent : 'var(--bg-elevated)';
+  if (knob) knob.style.transform = enabled ? 'translateX(18px)' : 'translateX(0)';
+  if (sub) sub.textContent = enabled ? 'Tracking enabled' : 'Currently disabled';
+
+  // Update settings label
+  const settingsLabel = document.getElementById('tracker-settings-label');
+  if (settingsLabel) settingsLabel.textContent = name;
+  const customSub = document.getElementById('tracker-customise-sub');
+  if (customSub) customSub.textContent = emoji + ' ' + name;
+}
+
+const TRACKER_PRESETS = [
+  { emoji: '🥦', name: 'Broccoli' },
+  { emoji: '💊', name: 'Vitamins' },
+  { emoji: '🚬', name: 'Cigarettes' },
+  { emoji: '☕', name: 'Coffee' },
+  { emoji: '💧', name: 'Water' },
+  { emoji: '🍺', name: 'Drinks' },
+  { emoji: '🌿', name: 'Greens' },
+  { emoji: '🍄', name: 'Mushrooms' },
+];
+
+let _emojiErrorTimer = null;
+
+function validateTrackerEmoji(input) {
+  const val = input.value.trim();
+  const emojiRegex = /^\p{Emoji_Presentation}|\p{Extended_Pictographic}/u;
+  const error = document.getElementById('tracker-emoji-error');
+  if (val.length === 0) { error.textContent = ''; return; }
+  if (!emojiRegex.test(val)) {
+    const messages = [
+      "that's not an emoji buddy",
+      "seriously? try an emoji 🙄",
+      "nope. emoji. little picture thing.",
+      "an EMOJI. not a letter.",
+      "mate… it has to be an emoji",
+      "still not an emoji lol",
+      "we've been over this. emoji.",
+      "bro 💀",
+    ];
+    input.value = '';
+    clearTimeout(_emojiErrorTimer);
+    error.textContent = messages[Math.floor(Math.random() * messages.length)];
+    _emojiErrorTimer = setTimeout(() => error.textContent = '', 2000);
+  } else {
+    clearTimeout(_emojiErrorTimer);
+    error.textContent = '';
+  }
+}
+
+function openQuestSettings() {
+  document.getElementById('quest-settings-modal').style.display = 'flex';
+}
+function closeQuestSettings() {
+  document.getElementById('quest-settings-modal').style.display = 'none';
+}
+
+let _timePickerCallback = null;
+let _tp = { hour: 7, minute: 0, ampm: 'AM' };
+
+function _tpRender() {
+  document.getElementById('tp-hour').textContent = String(_tp.hour).padStart(2,'0');
+  document.getElementById('tp-minute').textContent = String(_tp.minute).padStart(2,'0');
+  document.getElementById('tp-ampm').textContent = _tp.ampm;
+}
+function adjustHour(dir) {
+  _tp.hour = ((_tp.hour - 1 + dir + 12) % 12) + 1;
+  _tpRender();
+}
+function adjustMinute(dir) {
+  _tp.minute = (_tp.minute + dir * 5 + 60) % 60;
+  _tpRender();
+}
+function toggleAmPm() {
+  _tp.ampm = _tp.ampm === 'AM' ? 'PM' : 'AM';
+  _tpRender();
+}
+function openTimePicker(title, currentVal, callback) {
+  // Parse HH:MM (24h) into 12h display
+  const [h, m] = (currentVal || '07:00').split(':').map(Number);
+  _tp.ampm = h < 12 ? 'AM' : 'PM';
+  _tp.hour = h % 12 || 12;
+  _tp.minute = m;
+  _tpRender();
+  document.getElementById('time-picker-title').textContent = title;
+  _timePickerCallback = callback;
+  document.getElementById('time-picker-modal').style.display = 'flex';
+}
+function closeTimePicker() {
+  document.getElementById('time-picker-modal').style.display = 'none';
+  _timePickerCallback = null;
+}
+function confirmTimePicker() {
+  // Convert back to 24h HH:MM for storage
+  let h = _tp.hour % 12;
+  if (_tp.ampm === 'PM') h += 12;
+  const val = String(h).padStart(2,'0') + ':' + String(_tp.minute).padStart(2,'0');
+  if (_timePickerCallback) _timePickerCallback(val);
+  closeTimePicker();
+}
+function openWakeGoalPicker() {
+  openTimePicker('Wake Up Goal', state.wakeGoal || '07:00', setWakeGoal);
+}
+function openMorningDeadlinePicker() {
+  openTimePicker('Morning Deadline', state.morningDeadline || '11:00', setMorningDeadline);
+}
+function closeDataPrivacyInfo() {
+  document.getElementById('data-privacy-modal').style.display = 'none';
+}
+function showDataPrivacyInfo() {
+  document.getElementById('data-privacy-modal').style.display = 'flex';
+}
+
+function openTrackerCustomise() {
+  const grid = document.getElementById('tracker-emoji-grid');
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  grid.innerHTML = TRACKER_PRESETS.map(p => `
+    <div onclick="selectTrackerPreset('${p.emoji}','${p.name}')"
+      style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-elevated);border-radius:var(--radius-sm);cursor:pointer;border:1px solid ${getTrackerEmoji()===p.emoji ? accent : 'transparent'};">
+      <div style="font-size:26px;">${p.emoji}</div>
+      <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;">${p.name.toUpperCase()}</div>
+    </div>
+  `).join('');
+  document.getElementById('tracker-custom-emoji').value = getTrackerEmoji();
+  document.getElementById('tracker-custom-name').value = getTrackerName();
+  document.getElementById('tracker-customise-modal').style.display = 'flex';
+}
+
+function closeTrackerCustomise() {
+  document.getElementById('tracker-customise-modal').style.display = 'none';
+}
+
+function selectTrackerPreset(emoji, name) {
+  document.getElementById('tracker-custom-emoji').value = emoji;
+  document.getElementById('tracker-custom-name').value = name;
+  // Refresh grid to show selection
+  openTrackerCustomise();
+}
+
+function saveTrackerCustomise() {
+  const emoji = document.getElementById('tracker-custom-emoji').value.trim() || '🥦';
+  const name = document.getElementById('tracker-custom-name').value.trim() || 'Daily Tracker';
+  state.trackerEmoji = emoji;
+  state.trackerName = name;
+  saveState();
+  applyBroccoliVisibility();
+  closeTrackerCustomise();
+}
+
+let _addSelectedLists = [];
+let _addFlexi = false;
+let _addConsec = true;
+
+function setToggleUI(toggleId, knobId, active, accentColor) {
+  const toggle = document.getElementById(toggleId);
+  const knob = document.getElementById(knobId);
+  if (!toggle || !knob) return;
+  toggle.style.background = active ? (accentColor || '#4CAF50') : 'var(--bg-card)';
+  toggle.style.borderColor = active ? (accentColor || '#4CAF50') : 'var(--border)';
+  knob.style.transform = active ? 'translateX(20px)' : 'translateX(0)';
+  knob.style.background = active ? 'white' : 'var(--text-muted)';
+}
+
+function toggleAddFlexi() {
+  _addFlexi = !_addFlexi;
+  setToggleUI('add-flexi-toggle', 'add-flexi-knob', _addFlexi, '#4CAF50');
+  document.getElementById('add-consec-row').style.display = _addFlexi ? 'block' : 'none';
+}
+
+function toggleAddConsec() {
+  _addConsec = !_addConsec;
+  setToggleUI('add-consec-toggle', 'add-consec-knob', _addConsec);
+}
+
+function toggleAddList(list) {
+  const el = document.getElementById('add-list-' + list);
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  const idx = _addSelectedLists.indexOf(list);
+  if (idx === -1) {
+    _addSelectedLists.push(list);
+    el.style.borderColor = accent;
+    el.style.color = accent;
+    el.style.background = 'var(--bg-card)';
+  } else {
+    _addSelectedLists.splice(idx, 1);
+    el.style.borderColor = 'var(--border)';
+    el.style.color = 'var(--text-muted)';
+    el.style.background = 'var(--bg-elevated)';
+  }
+}
+
+let _editTaskId = null;
+let _editTaskList = null;
+let _editFlexi = false;
+let _editConsec = true;
+
+function openEditTask(taskId, list) {
+  _editTaskId = taskId;
+  _editTaskList = list;
+  const task = state.tasks[list].find(t => t.id === taskId);
+  if (!task) return;
+
+  document.getElementById('edit-task-name').value = task.name;
+
+  _editFlexi = !!task.flexi;
+  _editConsec = task.allowConsecutiveSkips !== false;
+  setToggleUI('edit-flexi-toggle', 'edit-flexi-knob', _editFlexi, '#4CAF50');
+  setToggleUI('edit-consec-toggle', 'edit-consec-knob', _editConsec);
+  document.getElementById('edit-consec-row').style.display = _editFlexi ? 'block' : 'none';
+
+  document.getElementById('edit-task-modal').style.display = 'flex';
+}
+
+function closeEditTask() {
+  document.getElementById('edit-task-modal').style.display = 'none';
+  _editTaskId = null;
+  _editTaskList = null;
+}
+
+function toggleEditFlexi() {
+  _editFlexi = !_editFlexi;
+  setToggleUI('edit-flexi-toggle', 'edit-flexi-knob', _editFlexi, '#4CAF50');
+  document.getElementById('edit-consec-row').style.display = _editFlexi ? 'block' : 'none';
+}
+
+function toggleEditConsec() {
+  _editConsec = !_editConsec;
+  setToggleUI('edit-consec-toggle', 'edit-consec-knob', _editConsec);
+}
+
+function editTaskConfirm() {
+  if (!_editTaskId || !_editTaskList) return;
+  const name = document.getElementById('edit-task-name').value.trim();
+  if (!name) { document.getElementById('edit-task-name').style.borderColor = '#ff4444'; return; }
+  const task = state.tasks[_editTaskList].find(t => t.id === _editTaskId);
+  if (!task) return;
+  task.name = name;
+  task.flexi = _editFlexi;
+  task.allowConsecutiveSkips = _editFlexi ? _editConsec : undefined;
+  saveState();
+  renderTaskList();
+  closeEditTask();
+}
+
+function openAddTask() {
+  const cats = ['physical','mental','emotional','social','nutritional'];
+  const catNames = ['Physical','Mental','Emotional','Social','Nutritional'];
+  const picker = document.getElementById('add-cat-picker');
+  picker.innerHTML = '';
+  let selectedCat = '';
+  cats.forEach((cat, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'cat-option';
+    btn.textContent = catNames[i];
+    btn.dataset.cat = cat;
+    btn.onclick = () => {
+      picker.querySelectorAll('.cat-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedCat = cat;
+    };
+    picker.appendChild(btn);
+  });
+  picker._getSelected = () => selectedCat;
+
+  // Pre-select current list
+  _addSelectedLists = [state.currentList];
+  ['morning','day','night'].forEach(l => {
+    const el = document.getElementById('add-list-' + l);
+    const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+    const active = l === state.currentList;
+    el.style.borderColor = active ? accent : 'var(--border)';
+    el.style.color = active ? accent : 'var(--text-muted)';
+    el.style.background = active ? 'var(--bg-card)' : 'var(--bg-elevated)';
+  });
+
+  // Reset flexi state
+  _addFlexi = false;
+  _addConsec = true;
+  setToggleUI('add-flexi-toggle', 'add-flexi-knob', false);
+  setToggleUI('add-consec-toggle', 'add-consec-knob', true);
+  document.getElementById('add-consec-row').style.display = 'none';
+
+  document.getElementById('add-task-name').value = '';
+  document.getElementById('add-task-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('add-task-name').focus(), 100);
+}
+
+function closeAddTask() {
+  document.getElementById('add-task-modal').style.display = 'none';
+}
+
+function addTaskConfirm() {
+  const name = document.getElementById('add-task-name').value.trim();
+  const picker = document.getElementById('add-cat-picker');
+  const category = picker._getSelected ? picker._getSelected() : '';
+  if (!name) { document.getElementById('add-task-name').style.borderColor = '#ff4444'; return; }
+  if (!category) { picker.style.outline = '1px solid #ff4444'; return; }
+  if (!_addSelectedLists.length) {
+    ['morning','day','night'].forEach(l => {
+      const el = document.getElementById('add-list-' + l);
+      el.style.borderColor = '#ff4444';
+    });
+    return;
+  }
+  document.getElementById('add-task-name').style.borderColor = '';
+  picker.style.outline = '';
+  _addSelectedLists.forEach(list => {
+    const id = list[0] + Date.now() + Math.random().toString(36).slice(2,5);
+    const task = { id, name, category };
+    if (_addFlexi) {
+      task.flexi = true;
+      task.allowConsecutiveSkips = _addConsec;
+    }
+    state.tasks[list].push(task);
+    state.taskStatus[list][id] = 'pending';
+  });
+  saveState();
+  renderTaskList();
+  closeAddTask();
+}
+
+function showConfirm(title, body, confirmLabel, onConfirm) {
+  document.getElementById('confirm-modal-title').textContent = title;
+  document.getElementById('confirm-modal-body').textContent = body;
+  const btn = document.getElementById('confirm-modal-btn');
+  btn.textContent = confirmLabel;
+  btn.onclick = () => { closeConfirmModal(); onConfirm(); };
+  document.getElementById('confirm-modal').classList.add('visible');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirm-modal').classList.remove('visible');
+}
+
+// Keep old names as aliases for any legacy calls
+function closeModal() { closeConfirmModal(); }
+
+function masterReset() {
+  showConfirm(
+    '⚠ Master Reset',
+    'This will permanently wipe everything — streaks, XP, history, tasks, and settings. This cannot be undone.',
+    'Reset Everything',
+    confirmReset
+  );
+}
+
+function confirmReset() {
+  state = {
+    wakeLogged: false,
+    wakeTime: null,
+    currentList: 'morning',
+    tasks: { morning: [], day: [], night: [] },
+    taskStatus: { morning: {}, day: {}, night: {} },
+    listComplete: { morning: false, day: false, night: false },
+    streak: 0,
+    bestStreak: 0,
+    totalXP: 0,
+    morningStreak: 0,
+    trophies: [],
+    broccoli: 0,
+    broccoliEnabled: false,
+    trackerEmoji: '🥦',
+    trackerName: 'Broccoli',
+    onboardingDone: false,
+    resetTime: '02:00',
+    history: [],
+    dayComplete: false,
+    savedPhrase: null,
+    lastResetDate: null
+  };
+  saveState();
+  applyDayTheme();
+  updateUI();
+  navigateTo('home');
+  // Launch onboarding from scratch
+  onboardingStep = 0;
+  document.querySelectorAll('.onboarding-slide').forEach((s,i) => s.classList.toggle('active', i === 0));
+  document.querySelectorAll('.onboarding-dot').forEach((d,i) => d.classList.toggle('active', i === 0));
+  const btn = document.getElementById('onboarding-btn');
+  btn.style.display = 'block';
+  btn.textContent = 'Next →';
+  const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+  btn.style.color = getContrastColor(accent);
+  document.querySelectorAll('.onboarding-choice:not(.onboarding-choice-muted)').forEach(b => b.style.color = getContrastColor(accent));
+  const overlay = document.getElementById('onboarding-overlay');
+  overlay.style.cssText = 'display:flex;opacity:1;animation:none;';
+}
+
+async function init() {
+  await loadState();
+  applyDayTheme();
+  updateRotationUI();
+  applyAllSettings();
+
+  // Onboarding — show only once
+  if (!state.onboardingDone) {
+    onboardingStep = 0;
+    document.querySelectorAll('.onboarding-slide').forEach((s,i) => s.classList.toggle('active', i === 0));
+    document.querySelectorAll('.onboarding-dot').forEach((d,i) => d.classList.toggle('active', i === 0));
+    document.getElementById('onboarding-overlay').style.display = 'flex';
+    document.getElementById('onboarding-btn').style.display = 'block';
+    document.getElementById('onboarding-btn').textContent = 'Next →';
+    const accent = getComputedStyle(document.getElementById('app')).getPropertyValue('--accent-1').trim();
+    document.getElementById('onboarding-btn').style.color = getContrastColor(accent);
+    document.querySelectorAll('.onboarding-choice:not(.onboarding-choice-muted)').forEach(b => b.style.color = getContrastColor(accent));
+  } else {
+    document.getElementById('onboarding-overlay').style.display = 'none';
+  }
+
+  if (!state.wakeLogged) {
+    // Show wake overlay
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    wakeInput.value = h + ':' + m;
+    wakeDisplay.textContent = to12Hour(h + ':' + m);
+  } else {
+    document.getElementById('wake-overlay').style.display = 'none';
+  }
+
+  // DEV: seed test history if empty
+  if (state.history.length === 0) {
+    const wakeTimes = ['05:48','06:12','06:30','07:05','06:45','05:55','07:20','06:08','06:50','07:15','05:40','06:25','07:00','06:15','05:58'];
+    const brocCounts = [2,1,3,0,2,4,1,2,0,3,2,1,3,2,4];
+    const cats = ['physical','mental','emotional','social','nutritional'];
+    for (let i = wakeTimes.length - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - (i + 1));
+      const scores = {};
+      cats.forEach(c => { scores[c] = { earned: Math.floor(Math.random()*5)+2, possible: 7 }; });
+      state.history.push({ date: d.toDateString(), wakeTime: wakeTimes[i], scores, xp: Math.floor(Math.random()*20)+10, broccoli: brocCounts[i] });
+    }
+    saveState();
+  }
+
+  updateUI();
+  // Restore wake goal display
+  const wakeGoalDisplay = document.getElementById('wake-goal-display');
+  if (state.wakeGoal && wakeGoalDisplay) wakeGoalDisplay.textContent = 'Target: ' + to12Hour(state.wakeGoal);
+  const morningDeadlineDisplay = document.getElementById('morning-deadline-display');
+  if (state.morningDeadline && morningDeadlineDisplay) morningDeadlineDisplay.textContent = 'Complete morning list before ' + to12Hour(state.morningDeadline);
+  // Make all pages visible in the swipe container
+  PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = 'flex';
+  });
+  navigateTo('home', true);
+  // Position glow after layout
+  requestAnimationFrame(() => updateNavGlow(0, true));
+  renderTaskList();
+  renderTrophies();
+  applyBroccoliVisibility();
+}
+
+init();
+</script>
+</body>
+</html>
